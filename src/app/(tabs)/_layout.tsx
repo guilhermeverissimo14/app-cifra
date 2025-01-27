@@ -29,9 +29,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="Create music"
         options={{
-          title: 'Explore',
+          title: 'Nova musica',
           // tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />

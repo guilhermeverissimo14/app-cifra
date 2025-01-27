@@ -1,4 +1,4 @@
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 export default function TabTwoScreen() {
   return (
@@ -6,3 +6,4 @@ export default function TabTwoScreen() {
   );
 }
 
+const styles = StyleSheet.create({});
