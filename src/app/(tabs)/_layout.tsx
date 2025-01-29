@@ -29,7 +29,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="Create music"
+        name="newMusic"
         options={{
           title: 'Nova musica',
           // tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
