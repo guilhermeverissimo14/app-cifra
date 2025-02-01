@@ -10,21 +10,19 @@ interface MusicCardProps {
     tone: string;
     notes: string;
     favorite: boolean;
-    setFavorite: (id:number, favorite: boolean) => void;
   }
 
-export const MusicCard = ({id, title, tone, notes, favorite, setFavorite}:MusicCardProps)=>{
+export const MusicCard = ({id, title, tone, notes, favorite}:MusicCardProps)=>{
    
     const musicDatabase = useMusicDatabase();
 
     const handleFavoritePress = async () => {
         const newFavorite = !favorite;
         await musicDatabase.updateFavorite(id, newFavorite);
-        setFavorite(id, newFavorite);
       }
    
     return(
-        <View style={styles.cardMusic} key={id}>
+        <TouchableOpacity style={styles.cardMusic} key={id}>
 
           <View style={styles.contentTexts}>
             <Text style={styles.textTitle}>{title}</Text>
@@ -44,7 +42,7 @@ export const MusicCard = ({id, title, tone, notes, favorite, setFavorite}:MusicC
 
           </Text>
 
-        </View>
+        </TouchableOpacity>
     )
 }
 

@@ -43,7 +43,6 @@ export default function HomeScreen() {
           tone={item.tone}
           notes={item.notes}
           favorite={item.favorite}
-          setFavorite={() => { }}
         />
       ))}
 

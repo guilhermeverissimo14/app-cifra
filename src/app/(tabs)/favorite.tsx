@@ -34,7 +34,6 @@ export default function Favorite() {
                     tone={item.tone}
                     notes={item.notes}
                     favorite={item.favorite}
-                    setFavorite={() => {}}
                 />
             ))}
 
