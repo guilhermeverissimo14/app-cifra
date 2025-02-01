@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useMusicDatabase } from "@/src/database/musicDatabase";
+import React, {useState } from "react";
 import {
   View,
   Text,
@@ -44,9 +45,12 @@ const transposeNotes = (inputText: string, fromKey: string, toKey: string): stri
 };
 
 export default function NewMusic() {
+  const [inputName, setInputName] = useState<string>(""); 
   const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+
+  const musicDatabase = useMusicDatabase();
 
   // Atualiza as notas ao mudar o tom
   const handleChangeKey = (newKey: string) => {
@@ -57,17 +61,28 @@ export default function NewMusic() {
     setModalVisible(false);
   };
 
+  const handleSaveMusic = async() => {
+    await musicDatabase.saveMusic(inputName, selectedKey, inputText);
+  }
+
   return (
     <View style={styles.container}>
-      {/* Seletor de tom */}
+
+      <ScrollView style={styles.scrollView}>
+      <Text style={styles.inputLabel}>Nome da música:</Text>
+      <TextInput
+        style={styles.inputName}
+        placeholder="Nome da música"
+        value={inputName}
+        onChangeText={(text) => setInputName(text)}
+      />
+
       <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
         <Text style={styles.keySelectorText}>
           {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
         </Text>
       </TouchableOpacity>
 
-      {/* Área de entrada e exibição das notas */}
-      <ScrollView style={styles.scrollView}>
         <Text style={styles.inputLabel}>Digite as notas:</Text>
         <TextInput
           multiline
@@ -79,16 +94,19 @@ export default function NewMusic() {
           placeholder="Ex: <D><D#>m <C> a <C#>"
         />
 
-        {/* Exibição das notas convertidas */}
         {selectedKey && (
           <>
             <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
             <Text style={styles.convertedNotes}>{inputText.replace(/<|>/g, "")}</Text>
           </>
         )}
+
+        <TouchableOpacity onPress={handleSaveMusic} style={styles.keySelector}>
+          <Text style={styles.keySelectorText}>Salvar Música</Text>
+        </TouchableOpacity>
+
       </ScrollView>
 
-      {/* Modal para seleção do tom */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -119,17 +137,28 @@ const styles = StyleSheet.create({
   },
   keySelector: {
     padding: 15,
-    backgroundColor: "#007BFF",
+    backgroundColor: "#a9a9a9",
     borderRadius: 10,
     marginBottom: 10,
+    marginTop: 10,
   },
   keySelectorText: {
-    color: "#FFF",
+    color: "#111",
     fontSize: 18,
     textAlign: "center",
   },
   inputLabel: {
-    fontSize: 18,
+    fontSize: 16,
+  },
+  inputName: {
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    backgroundColor: "#fff",
+    fontSize: 16,
+    marginTop:10,
+    marginBottom:10
   },
   input: {
     borderColor: "#ccc",

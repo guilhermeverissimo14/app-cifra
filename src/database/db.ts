@@ -10,9 +10,6 @@ export async function initializeDatabase(database: any) {
             notes TEXT NOT NULL
         );`);
 
-        // const firstRow = await database.getFirstAsync('SELECT * FROM music');
-        // console.log(firstRow);
-
     } catch (error) {
         console.error('Error initializing database', error);
 
