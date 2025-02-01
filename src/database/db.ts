@@ -7,9 +7,9 @@ export async function initializeDatabase(database: any) {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             tone TEXT NOT NULL,
-            notes TEXT NOT NULL
+            notes TEXT NOT NULL,
+            favorite BOOLEAN DEFAULT FALSE NOT NULL
         );`);
-
     } catch (error) {
         console.error('Error initializing database', error);
 

@@ -2,17 +2,27 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
+import { useMusicDatabase } from "@/src/database/musicDatabase";
 
 interface MusicCardProps {
     id: number;
     title: string;
     tone: string;
     notes: string;
-    isFavorite: boolean;
-    setFavorite: (value: boolean) => void;
+    favorite: boolean;
+    setFavorite: (id:number, favorite: boolean) => void;
   }
 
-export const MusicCard = ({id, title, tone, notes, isFavorite, setFavorite}:MusicCardProps)=>{
+export const MusicCard = ({id, title, tone, notes, favorite, setFavorite}:MusicCardProps)=>{
+   
+    const musicDatabase = useMusicDatabase();
+
+    const handleFavoritePress = async () => {
+        const newFavorite = !favorite;
+        await musicDatabase.updateFavorite(id, newFavorite);
+        setFavorite(id, newFavorite);
+      }
+   
     return(
         <View style={styles.cardMusic} key={id}>
 
@@ -24,8 +34,8 @@ export const MusicCard = ({id, title, tone, notes, isFavorite, setFavorite}:Musi
 
           <Text>
 
-            <TouchableOpacity onPress={() => setFavorite(!isFavorite)}>
-              {isFavorite ? (
+            <TouchableOpacity onPress={handleFavoritePress}>
+              {favorite ? (
                 <FontAwesomeIcon icon={faHeart} size={32} color="brown" />
               ) : (
                 <FontAwesomeIcon icon={faHeartRegular} size={32} color="brown" />

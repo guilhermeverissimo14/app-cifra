@@ -6,11 +6,12 @@ import { useMusicDatabase } from '@/src/database/musicDatabase';
 import { MusicCard } from '@/src/components/musicCard/musicCard';
 
 
-interface MusicType {
+export interface MusicType {
   id: number;
   title: string;
   tone: string;
   notes: string;
+  favorite: boolean;
 }
 
 export default function HomeScreen() {
@@ -18,8 +19,6 @@ export default function HomeScreen() {
   const musicDatabase = useMusicDatabase();
 
   const [music, setMusic] = useState<MusicType[]>([]);
-
-  const [isFavorite, setFavorite] = useState(false);
 
   async function getMusic() {
     const result = await musicDatabase.getMusic();
@@ -43,10 +42,16 @@ export default function HomeScreen() {
           title={item.title}
           tone={item.tone}
           notes={item.notes}
-          isFavorite={isFavorite}
-          setFavorite={setFavorite}
+          favorite={item.favorite}
+          setFavorite={() => { }}
         />
       ))}
+
+      {music.length === 0 && (
+        <View style={styles.musicNotFound}>
+          <Text style={styles.textNotFound}>Nenhuma musica encontrada...</Text>
+        </View>
+      )}
 
     </View>
   );
@@ -64,6 +69,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  musicNotFound: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  textNotFound: {
+    fontSize: 18,
+    fontWeight: 600,
+    color: "#333"
+  }
 })
 
 
