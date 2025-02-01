@@ -1,6 +1,9 @@
-import { useMusicDatabase } from '@/src/database/musicDatabase';
-import { useEffect, useState } from 'react';
 import { Text, StyleSheet, View, Platform, StatusBar } from 'react-native';
+import { useEffect, useState } from 'react';
+
+
+import { useMusicDatabase } from '@/src/database/musicDatabase';
+import { MusicCard } from '@/src/components/musicCard/musicCard';
 
 
 interface MusicType {
@@ -16,14 +19,16 @@ export default function HomeScreen() {
 
   const [music, setMusic] = useState<MusicType[]>([]);
 
-   async function getMusic(){
-      const result = await musicDatabase.getMusic();
-      setMusic(result as MusicType[]);
-    }
-  
-    useEffect(()=>{
-      getMusic();
-    })
+  const [isFavorite, setFavorite] = useState(false);
+
+  async function getMusic() {
+    const result = await musicDatabase.getMusic();
+    setMusic(result as MusicType[]);
+  }
+
+  useEffect(() => {
+    getMusic();
+  })
 
   return (
     <View style={styles.container}>
@@ -32,14 +37,18 @@ export default function HomeScreen() {
       </Text>
 
       {music.map((item) => (
-        <View style={styles.cardMusic} key={item.id}>
-          <Text>{item.title}</Text>
-          <Text>{item.tone}</Text>
-          <Text>{item.notes}</Text>
-        </View>
+        <MusicCard
+          key={item.id}
+          id={item.id}
+          title={item.title}
+          tone={item.tone}
+          notes={item.notes}
+          isFavorite={isFavorite}
+          setFavorite={setFavorite}
+        />
       ))}
 
-     </View>
+    </View>
   );
 }
 
@@ -54,13 +63,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-  },
-
-  cardMusic: {
-    backgroundColor: '#d3d3d3',
-    padding: 10,
-    margin: 10,
-    borderRadius: 5,
   },
 })
 
