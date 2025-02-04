@@ -4,10 +4,13 @@ import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { useMusicDatabase } from "@/src/database/musicDatabase";
 import { MusicType } from ".";
 import { MusicCard } from "@/src/components/musicCard/musicCard";
+import { useRouter } from "expo-router";
 
 export default function Favorite() {
 
     const { getMusicFavorite } = useMusicDatabase();
+
+    const router = useRouter();
 
     const [musicFavorite, setMusicFavorite] = useState<MusicType[]>([]);
 
@@ -21,13 +24,14 @@ export default function Favorite() {
         // console.log(musicFavorite.length > 0)
     })
 
-    return(
+    return (
         <View style={styles.container}>
 
             <Text style={styles.text}>Musicas Favoritas:</Text>
 
             {musicFavorite.length > 0 && musicFavorite.map((item) => (
-                <MusicCard 
+                <MusicCard
+                    navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
                     key={item.id}
                     id={item.id}
                     title={item.title}
@@ -38,34 +42,34 @@ export default function Favorite() {
             ))}
 
             {musicFavorite.length === 0 && (
-               <View style={styles.musicNotFound}>
-                     <Text style={styles.textNotFound}>Nenhuma musica favoritada...</Text>
-               </View>
-            ) }
+                <View style={styles.musicNotFound}>
+                    <Text style={styles.textNotFound}>Nenhuma musica favoritada...</Text>
+                </View>
+            )}
 
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container:{
+    container: {
         flex: 1,
         padding: 20,
-        paddingTop:Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10 ,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
     },
-    text:{
-        fontSize:20,
-        fontWeight:"bold",
-        color:"#333"
+    text: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#333"
     },
-    musicNotFound:{
-        flex:1,
-        justifyContent:"center",
-        alignItems:"center"
+    musicNotFound: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center"
     },
-    textNotFound:{
-        fontSize:18,
-        fontWeight:600,
-        color:"#333"
+    textNotFound: {
+        fontSize: 18,
+        fontWeight: 600,
+        color: "#333"
     }
 })

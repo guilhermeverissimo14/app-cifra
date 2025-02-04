@@ -10,9 +10,10 @@ interface MusicCardProps {
     tone: string;
     notes: string;
     favorite: boolean;
+    navigation: any;
   }
 
-export const MusicCard = ({id, title, tone, notes, favorite}:MusicCardProps)=>{
+export const MusicCard = ({id, title, tone, notes, favorite, navigation}:MusicCardProps)=>{
    
     const musicDatabase = useMusicDatabase();
 
@@ -22,12 +23,12 @@ export const MusicCard = ({id, title, tone, notes, favorite}:MusicCardProps)=>{
       }
    
     return(
-        <TouchableOpacity style={styles.cardMusic} key={id}>
+        <TouchableOpacity onPress={navigation} style={styles.cardMusic} key={id}>
 
           <View style={styles.contentTexts}>
             <Text style={styles.textTitle}>{title}</Text>
             <Text style={styles.textDescription}>{tone}</Text>
-            <Text style={styles.textDescription}>{notes}</Text>
+            {/* <Text style={styles.textDescription}>{notes}</Text> */}
           </View>
 
           <Text>
@@ -47,7 +48,9 @@ export const MusicCard = ({id, title, tone, notes, favorite}:MusicCardProps)=>{
 }
 
 const styles = StyleSheet.create({
-    contentTexts: {},
+    contentTexts: {
+      padding: 10,
+    },
   
     textTitle: {
       fontSize: 18,
@@ -68,5 +71,6 @@ const styles = StyleSheet.create({
       padding: 10,
       margin: 10,
       borderRadius: 5,
+      height: 80
     },
   });

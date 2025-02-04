@@ -1,5 +1,6 @@
 import { Text, StyleSheet, View, Platform, StatusBar } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 
 
 import { useMusicDatabase } from '@/src/database/musicDatabase';
@@ -15,6 +16,9 @@ export interface MusicType {
 }
 
 export default function HomeScreen() {
+
+
+  const router = useRouter();
 
   const musicDatabase = useMusicDatabase();
 
@@ -37,6 +41,7 @@ export default function HomeScreen() {
 
       {music.map((item) => (
         <MusicCard
+          navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
           key={item.id}
           id={item.id}
           title={item.title}
