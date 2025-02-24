@@ -51,7 +51,6 @@ export default function NewMusic() {
   const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [tonnerLarger, setTonnerLarger] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
 
   const musicDatabase = useMusicDatabase();
@@ -101,17 +100,15 @@ export default function NewMusic() {
 
         {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
 
-        <View style={styles.boxModals}>
+
+
           <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
-            <Text style={styles.keySelectorText}>
-              {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setTonnerLarger(!tonnerLarger)} style={styles.toneLager}>
-            <Text style={styles.toneLagerText}>{tonnerLarger ? "+" : "-"}</Text>
-          </TouchableOpacity>
-        </View>
-        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
+                            <Text style={styles.keySelectorText}>
+                                {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+                            </Text>
+                        </TouchableOpacity>
+        
+                        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
 
 
         <Text style={styles.inputLabel}>Digite as notas:</Text>
@@ -169,35 +166,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
 
-  boxModals: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
   keySelector: {
-    width: "75%",
+    width: "100%",
     padding: 15,
     backgroundColor: "#a9a9a9",
     borderRadius: 10,
     marginBottom: 5,
     marginTop: 10,
-  },
-
-  toneLager: {
-    width: "20%",
-    padding: 13,
-    backgroundColor: "#a9a9a9",
-    borderRadius: 10,
-    marginBottom: 5,
-    marginTop: 10,
-    marginLeft: 5,
-    alignItems: "center",
-  },
-
-  toneLagerText: {
-    color: "#111",
-    fontSize: 22,
-    textAlign: "center",
   },
 
   btnCreate: {
