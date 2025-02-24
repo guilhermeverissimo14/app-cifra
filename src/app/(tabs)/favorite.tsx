@@ -21,7 +21,6 @@ export default function Favorite() {
 
     useEffect(() => {
         getFavorites();
-        // console.log(musicFavorite.length > 0)
     })
 
     return (

@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, Platform, StatusBar } from 'react-native';
+import { Text, StyleSheet, View, Platform, StatusBar, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
@@ -39,6 +39,7 @@ export default function HomeScreen() {
         Todas as musicas:
       </Text>
 
+      <ScrollView>
       {music.map((item) => (
         <MusicCard
           navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
@@ -57,6 +58,7 @@ export default function HomeScreen() {
         </View>
       )}
 
+      </ScrollView>
     </View>
   );
 }

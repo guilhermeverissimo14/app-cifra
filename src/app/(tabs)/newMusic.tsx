@@ -51,6 +51,8 @@ export default function NewMusic() {
   const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [tonnerLarger, setTonnerLarger] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const musicDatabase = useMusicDatabase();
   const router = useRouter();
@@ -65,9 +67,11 @@ export default function NewMusic() {
   };
 
   const handleSaveMusic = async () => {
+    setLoading(true);
     try {
       await musicDatabase.saveMusic(inputName, selectedKey, inputText);
       Toast.success("Música salva com sucesso");
+      setLoading(false);
       setTimeout(() => {
         router.navigate("/(tabs)");
       }, 3000);
@@ -77,6 +81,7 @@ export default function NewMusic() {
     } catch (error) {
       console.error("Error saving music", error);
       Toast.error("Erro ao salvar música");
+      setLoading(false);
     }
   }
 
@@ -96,11 +101,16 @@ export default function NewMusic() {
 
         {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
 
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
-          <Text style={styles.keySelectorText}>
-            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.boxModals}>
+          <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
+            <Text style={styles.keySelectorText}>
+              {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setTonnerLarger(!tonnerLarger)} style={styles.toneLager}>
+            <Text style={styles.toneLagerText}>{tonnerLarger ? "+" : "-"}</Text>
+          </TouchableOpacity>
+        </View>
         {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
 
 
@@ -124,8 +134,8 @@ export default function NewMusic() {
           </>
         )}
 
-        <TouchableOpacity disabled={!inputName || !selectedKey || !inputText } onPress={handleSaveMusic} style={styles.keySelector}>
-          <Text style={styles.keySelectorText}>Salvar Música</Text>
+        <TouchableOpacity disabled={!inputName || !selectedKey || !inputText || loading} onPress={handleSaveMusic} style={styles.btnCreate}>
+          <Text style={styles.keySelectorText}>{loading ? "Carregando": "Salvar música"}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -158,13 +168,47 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f5f5f5",
   },
+
+  boxModals: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
   keySelector: {
+    width: "75%",
     padding: 15,
     backgroundColor: "#a9a9a9",
     borderRadius: 10,
     marginBottom: 5,
     marginTop: 10,
   },
+
+  toneLager: {
+    width: "20%",
+    padding: 13,
+    backgroundColor: "#a9a9a9",
+    borderRadius: 10,
+    marginBottom: 5,
+    marginTop: 10,
+    marginLeft: 5,
+    alignItems: "center",
+  },
+
+  toneLagerText: {
+    color: "#111",
+    fontSize: 22,
+    textAlign: "center",
+  },
+
+  btnCreate: {
+    width: "100%",
+    padding: 15,
+    backgroundColor: "#a9a9a9",
+    borderRadius: 10,
+    marginBottom: 5,
+    marginTop: 10,
+  },
+
   keySelectorText: {
     color: "#111",
     fontSize: 18,

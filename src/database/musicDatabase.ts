@@ -13,12 +13,13 @@ export function useMusicDatabase() {
         }
     }
 
-    const getMusicById = async (id:number) => {
+    const getMusicById = async (id: number) => {
         try {
             const result = await db.getAllAsync('SELECT * FROM music WHERE id = ?', [id]);
             return result;
         } catch (error) {
             console.error('Error getting music by id', error);
+            throw error;
         }
     }
 
@@ -34,27 +35,38 @@ export function useMusicDatabase() {
         }
     }
 
+    const editMusic = async (id: number, title: string, tone: string, notes: string) => {
+        try {
+            const query = 'UPDATE music SET title = ?, tone = ?, notes = ? WHERE id = ?';
+            const params = [title, tone, notes, id];
+            await db.runAsync(query, params);
+        } catch (error) {
+            console.error('Error updating music', error);
+            throw error;
+        }
+    }
+
     const updateFavorite = async (id: number, favorite: boolean) => {
         try {
-          const query = 'UPDATE music SET favorite = ? WHERE id = ?';
-          const params = [favorite, id];
-          await db.runAsync(query, params);
-          console.log('Favorite updated successfully');
+            const query = 'UPDATE music SET favorite = ? WHERE id = ?';
+            const params = [favorite, id];
+            await db.runAsync(query, params);
+            console.log('Favorite updated successfully');
         } catch (error) {
-          console.error('Error updating favorite', error);
+            console.error('Error updating favorite', error);
         }
-      };
+    };
 
 
-      const getMusicFavorite = async () => {
+    const getMusicFavorite = async () => {
         try {
             const result = await db.getAllAsync('SELECT * FROM music WHERE favorite = ?', [true]);
             return result;
         } catch (error) {
             console.error('Error getting favorite music', error);
         }
-      };
+    };
 
-    return { getMusic, getMusicById,saveMusic, updateFavorite, getMusicFavorite };
+    return { getMusic, getMusicById, saveMusic, editMusic, updateFavorite, getMusicFavorite };
 
 }

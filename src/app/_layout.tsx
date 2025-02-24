@@ -31,7 +31,7 @@ export default function RootLayout() {
      <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="listMusic/:id" options={{ headerShown: false }} />
+        <Stack.Screen name="listMusic/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
