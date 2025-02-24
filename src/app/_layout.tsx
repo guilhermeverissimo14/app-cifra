@@ -6,10 +6,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SQLiteProvider } from "expo-sqlite";
 import { initializeDatabase } from '../database/db';
+import ToastManager from "toastify-react-native";
 
-// import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

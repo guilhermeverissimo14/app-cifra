@@ -45,6 +45,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "toastify-react-native": "^5.0.4",
     "zod": "^3.24.1"
   },
   "devDependencies": {

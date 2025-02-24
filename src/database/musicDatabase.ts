@@ -30,6 +30,7 @@ export function useMusicDatabase() {
             console.log('Music saved successfully');
         } catch (error) {
             console.error('Error saving music', error);
+            throw error;
         }
     }
 

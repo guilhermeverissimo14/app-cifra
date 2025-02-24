@@ -1,5 +1,6 @@
 import { useMusicDatabase } from "@/src/database/musicDatabase";
-import React, {useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +12,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
+import ToastManager, { Toast } from 'toastify-react-native';
 
 const NOTES_MAP: { [key: string]: string[] } = {
   C: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
@@ -45,12 +47,13 @@ const transposeNotes = (inputText: string, fromKey: string, toKey: string): stri
 };
 
 export default function NewMusic() {
-  const [inputName, setInputName] = useState<string>(""); 
+  const [inputName, setInputName] = useState<string>("");
   const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const musicDatabase = useMusicDatabase();
+  const router = useRouter();
 
   // Atualiza as notas ao mudar o tom
   const handleChangeKey = (newKey: string) => {
@@ -61,27 +64,45 @@ export default function NewMusic() {
     setModalVisible(false);
   };
 
-  const handleSaveMusic = async() => {
-    await musicDatabase.saveMusic(inputName, selectedKey, inputText);
+  const handleSaveMusic = async () => {
+    try {
+      await musicDatabase.saveMusic(inputName, selectedKey, inputText);
+      Toast.success("Música salva com sucesso");
+      setTimeout(() => {
+        router.navigate("/(tabs)");
+      }, 3000);
+      setInputName("");
+      setSelectedKey("");
+      setInputText("");
+    } catch (error) {
+      console.error("Error saving music", error);
+      Toast.error("Erro ao salvar música");
+    }
   }
 
   return (
     <View style={styles.container}>
-
-      <ScrollView style={styles.scrollView}>
-      <Text style={styles.inputLabel}>Nome da música:</Text>
-      <TextInput
-        style={styles.inputName}
-        placeholder="Nome da música"
-        value={inputName}
-        onChangeText={(text) => setInputName(text)}
+      <ToastManager
+        width={300}
       />
+      <ScrollView style={styles.scrollView}>
+        <Text style={styles.inputLabel}>Nome da música:</Text>
+        <TextInput
+          style={styles.inputName}
+          placeholder="Nome da música"
+          value={inputName}
+          onChangeText={(text) => setInputName(text)}
+        />
 
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
-        <Text style={styles.keySelectorText}>
-          {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
-        </Text>
-      </TouchableOpacity>
+        {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
+
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
+          <Text style={styles.keySelectorText}>
+            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+          </Text>
+        </TouchableOpacity>
+        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
+
 
         <Text style={styles.inputLabel}>Digite as notas:</Text>
         <TextInput
@@ -94,6 +115,8 @@ export default function NewMusic() {
           placeholder="Ex: <D><D#>m <C> a <C#>"
         />
 
+        {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
+
         {selectedKey && (
           <>
             <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
@@ -101,7 +124,7 @@ export default function NewMusic() {
           </>
         )}
 
-        <TouchableOpacity onPress={handleSaveMusic} style={styles.keySelector}>
+        <TouchableOpacity disabled={!inputName || !selectedKey || !inputText } onPress={handleSaveMusic} style={styles.keySelector}>
           <Text style={styles.keySelectorText}>Salvar Música</Text>
         </TouchableOpacity>
 
@@ -139,7 +162,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#a9a9a9",
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 5,
     marginTop: 10,
   },
   keySelectorText: {
@@ -149,6 +172,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
+    margin: 5
   },
   inputName: {
     borderColor: "#ccc",
@@ -157,8 +181,8 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
     fontSize: 16,
-    marginTop:10,
-    marginBottom:10
+    marginTop: 10,
+    marginBottom: 10
   },
   input: {
     borderColor: "#ccc",
