@@ -28,7 +28,6 @@ export function useMusicDatabase() {
             const query = 'INSERT INTO music (title, tone, notes) VALUES (?, ?, ?)';
             const params = [title, tone, notes];
             await db.runAsync(query, params);
-            console.log('Music saved successfully');
         } catch (error) {
             console.error('Error saving music', error);
             throw error;
@@ -67,6 +66,17 @@ export function useMusicDatabase() {
         }
     };
 
-    return { getMusic, getMusicById, saveMusic, editMusic, updateFavorite, getMusicFavorite };
+    const deleteMusic = async (id: number) => {
+        try {
+            const query = 'DELETE FROM music WHERE id = ?';
+            await db.runAsync(query, [id]);
+        } catch (error) {
+            console.error('Error deleting music', error);
+            throw error;
+            
+        }
+    }
+
+    return { getMusic, getMusicById, saveMusic, editMusic, updateFavorite, getMusicFavorite, deleteMusic };
 
 }

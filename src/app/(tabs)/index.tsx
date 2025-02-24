@@ -47,7 +47,7 @@ export default function HomeScreen() {
           id={item.id}
           title={item.title}
           tone={item.tone}
-          notes={item.notes}
+          deleteIcon={true}
           favorite={item.favorite}
         />
       ))}

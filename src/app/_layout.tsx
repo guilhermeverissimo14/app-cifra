@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SQLiteProvider } from "expo-sqlite";
 import { initializeDatabase } from '../database/db';
-import ToastManager from "toastify-react-native";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -28,7 +28,8 @@ export default function RootLayout() {
   }
 
   return (
-     <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+       <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="listMusic/[id]" options={{ headerShown: false }} />
@@ -36,5 +37,6 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
      </SQLiteProvider>
+    </GestureHandlerRootView>
   );
 }
