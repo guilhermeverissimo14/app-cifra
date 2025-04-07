@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     },
 
     toneLager: {
-        width: "20%",
+        width: "23%",
         padding: 13,
         backgroundColor: "#a9a9a9",
         borderRadius: 10,
