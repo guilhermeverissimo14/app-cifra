@@ -49,6 +49,7 @@ export default function ListMusic() {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
     const [tonnerLarger, setTonnerLarger] = useState<boolean>(true);
+    const [showNotesInput, setShowNotesInput] = useState<boolean>(false);
 
 
     const handleChangeKey = (newKey: string) => {
@@ -90,6 +91,10 @@ export default function ListMusic() {
         }
     }
 
+    function routerBack(){
+        router.back()
+    }
+
     useEffect(() => {
         getMusicById();
     }, [id]);
@@ -101,7 +106,14 @@ export default function ListMusic() {
             />
 
             <ScrollView style={styles.scrollView}>
-                <Text style={styles.inputLabel}>Nome da música:</Text>
+
+                <View style={styles.boxTextName} >
+                    <Text style={styles.inputLabel}>Nome da música:</Text>
+                   <TouchableOpacity onPress={() => routerBack()} style={styles.btnBack}>
+                        <Text style={styles.textBtnBack}>X</Text>
+                    </TouchableOpacity>
+                </View>
+
                 <TextInput
                     style={styles.inputName}
                     placeholder="Nome da música"
@@ -124,16 +136,38 @@ export default function ListMusic() {
                 {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
 
 
-                <Text style={styles.inputLabel}>Digite as notas:</Text>
-                <TextInput
-                    multiline
-                    numberOfLines={10}
-                    textAlignVertical="top"
-                    style={styles.input}
-                    value={inputText}
-                    onChangeText={(text) => setInputText(text)}
-                    placeholder="Ex: <D><D#>m <C> a <C#>"
-                />
+                <TouchableOpacity
+                    onPress={() => setShowNotesInput(!showNotesInput)}
+                    style={styles.editNotesButton}
+                >
+                    <Text style={styles.editNotesButtonText}>
+                        {showNotesInput ? "Ocultar Notas Musicais" : "Editar Notas Musicais"}
+                    </Text>
+                </TouchableOpacity>
+
+                {showNotesInput && (
+                    <>
+                        <Text style={styles.inputLabel}>Digite as notas:</Text>
+                        <TextInput
+                            multiline
+                            numberOfLines={10}
+                            textAlignVertical="top"
+                            style={styles.input}
+                            value={inputText}
+                            onChangeText={(text) => setInputText(text)}
+                            placeholder="Ex: <D><D#>m <C> a <C#>"
+                        />
+
+                        {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
+
+                        {selectedKey && (
+                            <>
+                                <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
+                                <Text style={styles.convertedNotes}>{inputText.replace(/<|>/g, "")}</Text>
+                            </>
+                        )}
+                    </>
+                )}
 
                 {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
 
@@ -304,4 +338,30 @@ const styles = StyleSheet.create({
         fontSize: 18,
         textAlign: "center",
     },
+    editNotesButton: {
+        padding: 15,
+        backgroundColor: "#a9a9a9",
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 10,
+    },
+    editNotesButtonText: {
+        color: "#111",
+        fontSize: 18,
+        textAlign: "center",
+    },
+
+    boxTextName: {
+       position: "relative",
+    },
+
+    btnBack:{
+        position:"absolute",
+        right: 0,
+        top: 0,
+    },
+    textBtnBack:{
+        fontSize: 24,
+        fontWeight: "bold",
+    }
 });

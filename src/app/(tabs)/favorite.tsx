@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 
 import { useMusicDatabase } from "@/src/database/musicDatabase";
 import { MusicType } from ".";
 import { MusicCard } from "@/src/components/musicCard/musicCard";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 export default function Favorite() {
     const { getMusicFavorite } = useMusicDatabase();
@@ -17,14 +17,20 @@ export default function Favorite() {
         setMusicFavorite(result as MusicType[]);
     }
 
-    useEffect(() => {
-        getFavorites();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getFavorites();
+        }, [])
+    );
+
+    const handleFavoriteToggle = async () => {
+        await getFavorites();
+    };
 
     const renderItem = ({ item, drag, isActive }: RenderItemParams<MusicType>) => (
         <ScaleDecorator>
             <TouchableOpacity
-                onLongPress={drag}
+                onLongPress={drag} 
                 disabled={isActive}
                 activeOpacity={1}
                 style={[styles.draggableItem, { opacity: isActive ? 0.8 : 1 }]}
@@ -37,6 +43,7 @@ export default function Favorite() {
                     title={item.title}
                     tone={item.tone}
                     favorite={item.favorite}
+                    onFavoriteToggle={handleFavoriteToggle} 
                 />
             </TouchableOpacity>
         </ScaleDecorator>
@@ -80,7 +87,7 @@ const styles = StyleSheet.create({
     musicNotFound: {
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "center", 
     },
     textNotFound: {
         fontSize: 18,

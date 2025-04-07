@@ -39,26 +39,26 @@ export default function HomeScreen() {
         Todas as musicas:
       </Text>
 
-      <ScrollView>
-      {music.map((item) => (
-        <MusicCard
-          navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
-          key={item.id}
-          id={item.id}
-          title={item.title}
-          tone={item.tone}
-          deleteIcon={true}
-          favorite={item.favorite}
-        />
-      ))}
-
-      {music.length === 0 && (
+      {music.length > 0 ? (
+        <ScrollView>
+          {music.map((item) => (
+            <MusicCard
+              navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              tone={item.tone}
+              deleteIcon={true}
+              favorite={item.favorite}
+            />
+          ))}
+        </ScrollView>
+      ) : (
         <View style={styles.musicNotFound}>
           <Text style={styles.textNotFound}>Nenhuma musica encontrada...</Text>
         </View>
       )}
 
-      </ScrollView>
     </View>
   );
 }

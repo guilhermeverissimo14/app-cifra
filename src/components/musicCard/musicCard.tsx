@@ -11,15 +11,17 @@ interface MusicCardProps {
   favorite: boolean;
   navigation?: any;
   deleteIcon: boolean;
+  onFavoriteToggle?: () => void;
 }
 
-export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon }: MusicCardProps) => {
+export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, onFavoriteToggle}: MusicCardProps) => {
 
   const musicDatabase = useMusicDatabase();
 
   const handleFavoritePress = async () => {
     const newFavorite = !favorite;
     await musicDatabase.updateFavorite(id, newFavorite);
+    onFavoriteToggle?.();
   }
 
   const deleteMusic = async (id: number) => {
