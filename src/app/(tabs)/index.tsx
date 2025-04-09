@@ -1,6 +1,6 @@
-import { Text, StyleSheet, View, Platform, StatusBar, ScrollView} from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Text, StyleSheet, View, Platform, StatusBar, ScrollView } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 
 import { useMusicDatabase } from '@/src/database/musicDatabase';
@@ -29,9 +29,16 @@ export default function HomeScreen() {
     setMusic(result as MusicType[]);
   }
 
-  useEffect(() => {
-    getMusic();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getMusic();
+    }, [])
+  );
+
+  const handleFavoriteToggle = async () => {
+    await getMusic();
+  }
+
 
   return (
     <View style={styles.container}>
@@ -50,6 +57,7 @@ export default function HomeScreen() {
               tone={item.tone}
               deleteIcon={true}
               favorite={item.favorite}
+              onFavoriteToggle={handleFavoriteToggle}
             />
           ))}
         </ScrollView>

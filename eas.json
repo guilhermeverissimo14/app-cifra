@@ -16,7 +16,11 @@
       "preview4": {
         "distribution": "internal"
       },
-      "production": {}
+      "production": {
+        "env": {
+          "SENTRY_AUTH_TOKEN": "SENTRY_AUTH_TOKEN"
+        }
+      }
     }
   }
   

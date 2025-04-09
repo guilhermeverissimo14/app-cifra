@@ -17,17 +17,17 @@ Sentry.init({
 });
 
 function RootLayout() {
- 
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-       <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="listMusic/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-     </SQLiteProvider>
+      <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="listMusic/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <StatusBar style="auto" />
+        </Stack>
+      </SQLiteProvider>
     </GestureHandlerRootView>
   );
 }

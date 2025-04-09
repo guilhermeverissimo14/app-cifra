@@ -54,6 +54,12 @@
         "projectId": "e02b9bc5-8596-490f-b233-c3c10a02dd9b"
       }
     },
-    "owner": "guilhermeverissimo14"
+    "owner": "guilhermeverissimo14",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e02b9bc5-8596-490f-b233-c3c10a02dd9b"
+    }
   }
 }
