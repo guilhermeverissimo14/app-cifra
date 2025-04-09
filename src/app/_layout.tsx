@@ -1,32 +1,23 @@
+import * as Sentry from '@sentry/react-native';
+
 import React from 'react';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import { SQLiteProvider } from "expo-sqlite";
 import { initializeDatabase } from '../database/db';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
-SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  // const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+Sentry.init({
+  dsn: 'https://535dee0d4209b57a4052d1a447a33a49@o4509114957627392.ingest.us.sentry.io/4509115150499840',
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
-  if (!loaded) {
-    return null;
-  }
-
+function RootLayout() {
+ 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
        <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
@@ -40,3 +31,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(RootLayout)

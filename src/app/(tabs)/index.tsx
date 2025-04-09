@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, Platform, StatusBar, ScrollView } from 'react-native';
+import { Text, StyleSheet, View, Platform, StatusBar, ScrollView} from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
@@ -31,7 +31,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     getMusic();
-  })
+  }, []);
 
   return (
     <View style={styles.container}>

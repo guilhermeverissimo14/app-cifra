@@ -186,12 +186,6 @@ export default function ListMusic() {
 
                         {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
 
-                        {selectedKey && (
-                            <>
-                                <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
-                                <Text style={styles.convertedNotes}>{inputText.replace(/<|>/g, "")}</Text>
-                            </>
-                        )}
                     </>
                 )}
 

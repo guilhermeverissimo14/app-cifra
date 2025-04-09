@@ -1,4 +1,5 @@
 import { useSQLiteContext } from "expo-sqlite";
+import { Alert } from "react-native";
 
 export function useMusicDatabase() {
 
@@ -10,6 +11,7 @@ export function useMusicDatabase() {
             return result;
         } catch (error) {
             console.error('Error getting music', error);
+            throw error;
         }
     }
 
