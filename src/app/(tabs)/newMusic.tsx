@@ -14,61 +14,35 @@ import {
 } from "react-native";
 import ToastManager, { Toast } from 'toastify-react-native';
 
-const ENHARMONIC_EQUIVALENTS: { [key: string]: string } = {
-  "C#": "Db", "Db": "C#",
-  "D#": "Eb", "Eb": "D#",
-  "F#": "Gb", "Gb": "F#",
-  "G#": "Ab", "Ab": "G#",
-  "A#": "Bb", "Bb": "A#"
-};
-
-// Tons que geralmente usam bemóis
-const FLAT_KEYS = ["F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
-
 const NOTES_MAP: { [key: string]: string[] } = {
   C: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
   "C#": ["C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C"],
-  Db: ["Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B", "C"],
   D: ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#"],
-  Eb: ["Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B", "C", "Db", "D"],
+  "D#": ["D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
   E: ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#"],
   F: ["F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-  Gb: ["Gb", "G", "Ab", "A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F"],
+  "F#": ["F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F"],
   G: ["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#"],
-  Ab: ["Ab", "A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G"],
+  "G#": ["G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
   A: ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"],
-  Bb: ["Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A"],
+  "A#": ["A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
   B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-const normalizeNote = (note: string, preferFlat: boolean): string => {
-  if (preferFlat && ENHARMONIC_EQUIVALENTS[note]?.includes('b')) {
-    return ENHARMONIC_EQUIVALENTS[note];
-  }
-  return note;
-};
-
+// Função para transpor notas
 const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
-  if (!fromKey || !toKey || fromKey === toKey) return inputText;
+  if (!fromKey || !toKey || fromKey === toKey) return inputText; // Evita erro se o tom ainda não foi selecionado
 
   const fromScale = NOTES_MAP[fromKey];
   const toScale = NOTES_MAP[toKey];
-  const preferFlat = FLAT_KEYS.includes(toKey);
 
-  return inputText.replace(/<([A-G]#?[^>]*)>/g, (match, fullNote) => {
-    const matchResult = fullNote.match(/^([A-G]#?)/);
-    const rootNote = matchResult ? matchResult[1] : "";
-    const suffix = fullNote.replace(rootNote, "");
+  return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
+    const matchResult = note.match(/[A-G]#?/);
+    const rootNote = matchResult ? matchResult[0] : ""; // Apenas a nota principal
+    const suffix = note.replace(rootNote, ""); // Mantém sufixos como "m", "7", etc.
 
     const index = fromScale.indexOf(rootNote);
-    if (index === -1) return match;
-
-    let transposed = toScale[index];
-
-    // Substitui por bemol se necessário
-    transposed = normalizeNote(transposed, preferFlat);
-
-    return `<${transposed}${suffix}>`;
+    return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
   });
 };
 
