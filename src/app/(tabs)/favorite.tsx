@@ -30,7 +30,7 @@ export default function Favorite() {
     const renderItem = ({ item, drag, isActive }: RenderItemParams<MusicType>) => (
         <ScaleDecorator>
             <TouchableOpacity
-                onLongPress={drag} 
+                onLongPress={drag}
                 disabled={isActive}
                 activeOpacity={1}
                 style={[styles.draggableItem, { opacity: isActive ? 0.8 : 1 }]}
@@ -43,7 +43,7 @@ export default function Favorite() {
                     title={item.title}
                     tone={item.tone}
                     favorite={item.favorite}
-                    onFavoriteToggle={handleFavoriteToggle} 
+                    onFavoriteToggle={handleFavoriteToggle}
                 />
             </TouchableOpacity>
         </ScaleDecorator>
@@ -76,18 +76,23 @@ export default function Favorite() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
+        backgroundColor: "#101323",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
     },
     text: {
         fontSize: 20,
-        fontWeight: "bold",
-        color: "#333",
+        fontFamily: "SplineSans-Bold",
+        paddingTop: 52,
+        paddingBottom: 16,
+        color: "white",
+        marginBottom: 32
     },
     musicNotFound: {
         flex: 1,
         justifyContent: "center",
-        alignItems: "center", 
+        alignItems: "center",
     },
     textNotFound: {
         fontSize: 18,

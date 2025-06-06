@@ -1,8 +1,9 @@
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faEye, faHeart, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faHeart, faMusic, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { useMusicDatabase } from "@/src/database/musicDatabase";
+import { transform } from "@babel/core";
 
 interface MusicCardProps {
   id: number;
@@ -12,9 +13,10 @@ interface MusicCardProps {
   navigation?: any;
   deleteIcon: boolean;
   onFavoriteToggle?: () => void;
+  onDeleteSuccess?: () => void;
 }
 
-export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, onFavoriteToggle}: MusicCardProps) => {
+export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, onFavoriteToggle, onDeleteSuccess }: MusicCardProps) => {
 
   const musicDatabase = useMusicDatabase();
 
@@ -38,6 +40,7 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
             text: "OK",
             onPress: async () => {
               await musicDatabase.deleteMusic(id);
+              onDeleteSuccess?.();
             }
           }
         ]
@@ -49,10 +52,19 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
 
   return (
     <View style={styles.cardMusic} key={id}>
-      <View style={styles.contentTexts}>
-        <Text style={styles.textTitle}>{title.length > 20 ? title.substring(0, 20) + '...' : title}</Text>
-        <Text style={styles.textDescription}>{tone.length > 20 ? tone.substring(0, 20) + '...' : tone}</Text>
+
+      <View style={styles.boxIcons}>
+
+        <View style={styles.icon}>
+            <FontAwesomeIcon icon={faMusic} size={20} color="white" />
+        </View>
+
+        <View style={styles.contentTexts}>
+          <Text style={styles.textTitle}>{title.length > 20 ? title.substring(0, 20) + '...' : title}</Text>
+          <Text style={styles.textDescription}>{tone.length > 20 ? tone.substring(0, 20) + '...' : tone}</Text>
+        </View>
       </View>
+
 
 
       <View style={styles.boxActions}>
@@ -61,19 +73,19 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
 
         {deleteIcon && (
           <TouchableOpacity onPress={() => deleteMusic(id)}>
-            <FontAwesomeIcon icon={faTrash} size={25} color="gray" />
+            <FontAwesomeIcon icon={faTrash} size={15} color="white" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={navigation}>
-          <FontAwesomeIcon icon={faEye} size={25} color="gray" />
+          <FontAwesomeIcon icon={faEye} size={15} color="white" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleFavoritePress}>
           {favorite ? (
-            <FontAwesomeIcon icon={faHeart} size={25} color="brown" />
+            <FontAwesomeIcon icon={faHeart} size={20} color="brown" />
           ) : (
-            <FontAwesomeIcon icon={faHeartRegular} size={25} color="brown" />
+            <FontAwesomeIcon icon={faHeartRegular} size={20} color="brown" />
           )}
         </TouchableOpacity>
 
@@ -85,39 +97,56 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
 }
 
 const styles = StyleSheet.create({
+
+  boxIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  icon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#21284a",
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
   contentTexts: {
-    padding: 10,
   },
 
   boxActions: {
-    width: '40%',
-    height: 80,
+    width: '30%',
     flexDirection: 'row',
     justifyContent: 'center',
-  gap: 20,
+    gap: 20,
     alignItems: 'center',
   },
 
   textTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    color: "white",
+    fontFamily: "SplineSans-SemiBold",
   },
 
   textDescription: {
     fontSize: 16,
-    color: '#333',
+    color: "white",
+    fontFamily: "SplineSans-Regular",
   },
 
   cardMusic: {
-    width: '100%',
+    width: '95%',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    backgroundColor: '#d3d3d3',
-    padding: 10,
-    margin: 3,
-    borderRadius: 5,
-    height: 80
+    backgroundColor: "#101323",
+    marginBottom: 8,
+    borderRadius: 8,
+    borderColor: "#21284a",
+    borderWidth: 1,
+    padding: 8,
   },
 });

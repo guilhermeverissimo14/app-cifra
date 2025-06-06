@@ -5,6 +5,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { useMusicDatabase } from '@/src/database/musicDatabase';
 import { MusicCard } from '@/src/components/musicCard/musicCard';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 
 export interface MusicType {
@@ -42,21 +44,34 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+
       <Text style={styles.text}>
-        Todas as musicas:
+         Minhas musicas 
       </Text>
 
-      <TextInput
-        style={styles.inputSearch}
-        onChangeText={(text) => {
-          if (text.length > 0) {
-            const filteredMusic = music.filter(item => item.title.toLowerCase().includes(text.toLowerCase()));
-            setMusic(filteredMusic);
-          } else {
-            getMusic();
-          }
-        }}
-      />
+      <View style={styles.searchContainer}>
+        <FontAwesomeIcon 
+          icon={faSearch} 
+          size={16} 
+          color="#8e99cc" 
+          style={styles.searchIcon} 
+        />
+        <TextInput
+          style={styles.inputSearch}
+          placeholder="Search"
+          placeholderTextColor="#8e99cc"
+          onChangeText={(text) => {
+            if (text.length > 0) {
+              const filteredMusic = music.filter(item => 
+                item.title.toLowerCase().includes(text.toLowerCase())
+              );
+              setMusic(filteredMusic);
+            } else {
+              getMusic();
+            }
+          }}
+        />
+      </View>
 
       {music.length > 0 ? (
         <ScrollView>
@@ -70,6 +85,7 @@ export default function HomeScreen() {
               deleteIcon={true}
               favorite={item.favorite}
               onFavoriteToggle={handleFavoriteToggle}
+              onDeleteSuccess={getMusic}
             />
           ))}
         </ScrollView>
@@ -89,17 +105,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#101323",
     alignItems: "center",
+    paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
+  },
+    searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    width: "95%",
+    marginVertical: 32,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   inputSearch: {
-    marginTop: 32,
-    marginBottom: 16,
-    backgroundColor: "#21284a",
-    color: "#8e99cc",
-    borderRadius: 8,
-    width: "90%",
-    paddingLeft: 8,
+    flex: 1,
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Regular',
+    fontSize: 16,
+    padding: 8,
   },
   text: {
+    marginBottom: 16,
     fontSize: 20,
     color: "white",
     fontFamily: 'SplineSans-Bold',

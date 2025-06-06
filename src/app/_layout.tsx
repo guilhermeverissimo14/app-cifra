@@ -45,6 +45,7 @@ function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="light" backgroundColor="transparent" translucent={true} />
       <SQLiteProvider databaseName='sifra.db' onInit={initializeDatabase}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
