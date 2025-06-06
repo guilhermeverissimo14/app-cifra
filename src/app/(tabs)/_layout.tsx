@@ -2,49 +2,71 @@ import { faHeart, faHome, faMusic, faPlus } from '@fortawesome/free-solid-svg-ic
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 
 
 export default function TabLayout() {
-  // const colorScheme = useColorScheme();
 
   return (
     <Tabs
-      // initialRouteName="index"
       screenOptions={{
-        // tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: "#fff",
+        tabBarInactiveTintColor: "#8e99cc",
         headerShown: false,
-        // tabBarButton: HapticTab,
-        // tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            backgroundColor: '#21284a',
           },
-          default: {},
+          default: {
+            backgroundColor: '#21284a',
+            height: 70,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
         }),
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 10,
+          borderTopColor: '#101323',
+          borderTopWidth: 1,
+        }
       }}>
 
       <Tabs.Screen
         name="favorite"
         options={{
           title: 'Favoritos',
-          tabBarIcon: ({ color }) => <FontAwesomeIcon size={28} icon={faHeart} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <FontAwesomeIcon size={28} icon={faHeart} color={color} />
+            </View>
+          ),
         }}
       />
-  
+
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <FontAwesomeIcon size={28} icon={faHome} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <FontAwesomeIcon size={28} icon={faHome} color={color} />
+            </View>
+          ),
         }}
       />
+      
       <Tabs.Screen
         name="newMusic"
         options={{
           title: 'Nova musica',
-          tabBarIcon: ({ color }) => <FontAwesomeIcon size={28} icon={faPlus} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <FontAwesomeIcon size={28} icon={faPlus} color={color} />
+            </View>
+          ),
         }}
       />
 

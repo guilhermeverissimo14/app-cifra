@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, Platform, StatusBar, ScrollView } from 'react-native';
+import { Text, StyleSheet, View, Platform, StatusBar, ScrollView, TextInput } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 
@@ -46,6 +46,18 @@ export default function HomeScreen() {
         Todas as musicas:
       </Text>
 
+      <TextInput
+        style={styles.inputSearch}
+        onChangeText={(text) => {
+          if (text.length > 0) {
+            const filteredMusic = music.filter(item => item.title.toLowerCase().includes(text.toLowerCase()));
+            setMusic(filteredMusic);
+          } else {
+            getMusic();
+          }
+        }}
+      />
+
       {music.length > 0 ? (
         <ScrollView>
           {music.map((item) => (
@@ -75,13 +87,22 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
-    padding: 20,
+    backgroundColor: "#101323",
+    alignItems: "center",
+  },
+  inputSearch: {
+    marginTop: 32,
+    marginBottom: 16,
+    backgroundColor: "#21284a",
+    color: "#8e99cc",
+    borderRadius: 8,
+    width: "90%",
+    paddingLeft: 8,
   },
   text: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    color: "white",
+    fontFamily: 'SplineSans-Bold',
   },
   musicNotFound: {
     flex: 1,
@@ -91,7 +112,7 @@ const styles = StyleSheet.create({
   textNotFound: {
     fontSize: 18,
     fontWeight: 600,
-    color: "#333"
+    color: "white",
   }
 })
 
