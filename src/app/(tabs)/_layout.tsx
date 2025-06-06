@@ -1,4 +1,5 @@
-import { faHeart, faHome, faMusic, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faHome, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -38,9 +39,9 @@ export default function TabLayout() {
         name="favorite"
         options={{
           title: 'Favoritos',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <FontAwesomeIcon size={28} icon={faHeart} color={color} />
+              <FontAwesomeIcon size={28} icon={focused ? faHeart : faHeartRegular} color={color} />
             </View>
           ),
         }}
@@ -50,7 +51,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
               <FontAwesomeIcon size={28} icon={faHome} color={color} />
             </View>

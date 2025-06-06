@@ -53,7 +53,7 @@ export default function Favorite() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Músicas Favoritas:</Text>
+            <Text style={styles.text}>Músicas Favoritas</Text>
 
             {musicFavorite.length > 0 ? (
                 <DraggableFlatList
