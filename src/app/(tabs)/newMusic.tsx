@@ -96,19 +96,20 @@ export default function NewMusic() {
           placeholder="Nome da música"
           value={inputName}
           onChangeText={(text) => setInputName(text)}
+          placeholderTextColor="#8e99cc"
         />
 
         {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
 
 
 
-          <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
-                            <Text style={styles.keySelectorText}>
-                                {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
-                            </Text>
-                        </TouchableOpacity>
-        
-                        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
+          <Text style={styles.keySelectorText}>
+            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+          </Text>
+        </TouchableOpacity>
+
+        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
 
 
         <Text style={styles.inputLabel}>Digite as notas:</Text>
@@ -120,6 +121,7 @@ export default function NewMusic() {
           value={inputText}
           onChangeText={(text) => setInputText(text)}
           placeholder="Ex: <D><D#>m <C> a <C#>"
+          placeholderTextColor="#8e99cc"
         />
 
         {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
@@ -132,7 +134,7 @@ export default function NewMusic() {
         )}
 
         <TouchableOpacity disabled={!inputName || !selectedKey || !inputText || loading} onPress={handleSaveMusic} style={styles.btnCreate}>
-          <Text style={styles.keySelectorText}>{loading ? "Carregando": "Salvar música"}</Text>
+          <Text style={styles.keySelectorText}>{loading ? "Carregando" : "Salvar música"}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -163,13 +165,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
     padding: 20,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#101323",
   },
 
   keySelector: {
     width: "100%",
     padding: 15,
-    backgroundColor: "#a9a9a9",
+    backgroundColor: "#171c36",
     borderRadius: 10,
     marginBottom: 5,
     marginTop: 10,
@@ -178,37 +180,42 @@ const styles = StyleSheet.create({
   btnCreate: {
     width: "100%",
     padding: 15,
-    backgroundColor: "#a9a9a9",
+    backgroundColor: "#607afb",
     borderRadius: 10,
     marginBottom: 5,
     marginTop: 10,
   },
 
   keySelectorText: {
-    color: "#111",
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Regular',
     fontSize: 18,
     textAlign: "center",
   },
   inputLabel: {
     fontSize: 16,
-    margin: 5
+    color: "#fff",
+    fontFamily: 'SplineSans-Bold',
+    marginTop: 8,
+    marginBottom: 8,
   },
   inputName: {
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 5,
+    color: "#ffffff",
+    borderWidth: 0,
+    borderRadius: 8,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#171c36",
     fontSize: 16,
     marginTop: 10,
     marginBottom: 10
   },
   input: {
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 5,
+    borderWidth: 0,
+    borderRadius: 8,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#171c36",
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Regular',
     fontSize: 16,
     lineHeight: 24,
     textAlignVertical: "top",
@@ -219,12 +226,15 @@ const styles = StyleSheet.create({
   },
   convertedNotesLabel: {
     fontSize: 22,
-    fontWeight: "bold",
+    color: "#fff",
+    fontFamily: 'SplineSans-Bold',
   },
   convertedNotes: {
-    fontSize: 24,
-    color: "blue",
+    fontSize: 20,
+    color: "#8e99cc",
+    fontFamily: 'SplineSans-Regular',
     marginTop: 10,
+    marginBottom: 10,
   },
   modalOverlay: {
     flex: 1,
@@ -233,19 +243,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#21284a",
     padding: 20,
     borderRadius: 10,
     width: "80%",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontFamily: 'SplineSans-Bold',
+    color: "#fff",
     marginBottom: 10,
   },
   modalOption: {
     padding: 10,
-    backgroundColor: "#DDD",
+    backgroundColor: "#f0f0f0",
     borderRadius: 5,
     marginVertical: 5,
   },
