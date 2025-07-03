@@ -38,7 +38,7 @@ export default function Favorite() {
 
                 <MusicCard
                     deleteIcon={false}
-                    navigation={() => router.push(`/listMusic/${item.id}`)}
+                    navigation={() => { router.push(`/listMusic/${item.id}` as any) }}
                     id={item.id}
                     title={item.title}
                     tone={item.tone}

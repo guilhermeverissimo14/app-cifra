@@ -1,9 +1,11 @@
 import { useMusicDatabase } from "@/src/database/musicDatabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faArrowLeft, faHeart, faPen, faMusic, faUpDown } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { MusicType } from "../(tabs)";
-import ToastManager, { Toast } from "toastify-react-native";
 
 const NOTES_MAP: { [key: string]: string[] } = {
     C: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
@@ -20,181 +22,219 @@ const NOTES_MAP: { [key: string]: string[] } = {
     B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-// Função para transpor notas
-const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
-    if (!fromKey || !toKey || fromKey === toKey) return inputText; // Evita erro se o tom ainda não foi selecionado
+// Mapeamento de tons maiores e menores
+const MAJOR_MINOR_MAP: { [key: string]: { major: string, minor: string } } = {
+    C: { major: "C", minor: "Cm" },
+    "C#": { major: "C#", minor: "C#m" },
+    D: { major: "D", minor: "Dm" },
+    "D#": { major: "D#", minor: "D#m" },
+    E: { major: "E", minor: "Em" },
+    F: { major: "F", minor: "Fm" },
+    "F#": { major: "F#", minor: "F#m" },
+    G: { major: "G", minor: "Gm" },
+    "G#": { major: "G#", minor: "G#m" },
+    A: { major: "A", minor: "Am" },
+    "A#": { major: "A#", minor: "A#m" },
+    B: { major: "B", minor: "Bm" },
+};
 
+// Função para detectar se o tom é menor baseado no conteúdo da música
+const detectKeyType = (notes: string, currentKey: string): 'major' | 'minor' => {
+    // Verifica se há indicação explícita de menor no texto
+    const minorPatterns = [
+        new RegExp(`<${currentKey}m>`, 'gi'),
+        new RegExp(`${currentKey}m`, 'gi'),
+        /minor/gi,
+        /menor/gi
+    ];
+    
+    for (const pattern of minorPatterns) {
+        if (pattern.test(notes)) {
+            return 'minor';
+        }
+    }
+    
+    // Se não encontrou indicação de menor, assume maior
+    return 'major';
+};
+
+const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
+    if (!fromKey || !toKey || fromKey === toKey) return inputText;
+    
     const fromScale = NOTES_MAP[fromKey];
     const toScale = NOTES_MAP[toKey];
 
     return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
         const matchResult = note.match(/[A-G]#?/);
-        const rootNote = matchResult ? matchResult[0] : ""; // Apenas a nota principal
-        const suffix = note.replace(rootNote, ""); // Mantém sufixos como "m", "7", etc.
+        const rootNote = matchResult ? matchResult[0] : "";
+        const suffix = note.replace(rootNote, "");
 
         const index = fromScale.indexOf(rootNote);
         return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
     });
 };
 
-export default function ListMusic() {
-
+export default function ViewMusic() {
     const { id } = useLocalSearchParams();
     const musicDatabase = useMusicDatabase();
     const router = useRouter();
 
-    const [inputName, setInputName] = useState<string>("");
-    const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
-    const [inputText, setInputText] = useState<string>("");
+    const [music, setMusic] = useState<MusicType | null>(null);
+    const [currentKey, setCurrentKey] = useState<string>("");
+    const [displayedNotes, setDisplayedNotes] = useState<string>("");
     const [modalVisible, setModalVisible] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [tonnerLarger, setTonnerLarger] = useState<boolean>(true);
-    const [showNotesInput, setShowNotesInput] = useState<boolean>(false);
-
+    const [isFavorite, setIsFavorite] = useState<boolean>(false);
+    const [keyType, setKeyType] = useState<'major' | 'minor'>('major');
 
     const handleChangeKey = (newKey: string) => {
-        if (selectedKey) {
-            setInputText(transposeNotes(inputText, selectedKey, newKey));
+        if (music && currentKey) {
+            const transposedNotes = transposeNotes(music.notes, currentKey, newKey);
+            setDisplayedNotes(transposedNotes.replace(/<|>/g, ""));
         }
-        setSelectedKey(newKey);
+        setCurrentKey(newKey);
         setModalVisible(false);
+    };
+
+    const toggleKeyType = () => {
+        setKeyType(keyType === 'major' ? 'minor' : 'major');
+    };
+
+    const getDisplayKey = () => {
+        if (!currentKey) return "";
+        return keyType === 'minor' ? `${currentKey}m` : currentKey;
+    };
+
+    const handleFavoriteToggle = async () => {
+        try {
+            await musicDatabase.updateFavorite(Number(id), !isFavorite);
+            setIsFavorite(!isFavorite);
+        } catch (error) {
+            console.error("Error updating favorite", error);
+        }
     };
 
     async function getMusicById() {
         try {
             const result = await musicDatabase.getMusicById(Number(id));
             const musicData = result[0] as MusicType;
-            setInputName(musicData.title);
-            setSelectedKey(musicData.tone);
-            setInputText(musicData.notes);
+            setMusic(musicData);
+            setCurrentKey(musicData.tone);
+            setDisplayedNotes(musicData.notes.replace(/<|>/g, ""));
+            setIsFavorite(musicData.favorite);
+            
+            // Detecta automaticamente se é maior ou menor
+            const detectedType = detectKeyType(musicData.notes, musicData.tone);
+            setKeyType(detectedType);
         } catch (error) {
             console.error(error);
         }
-    }
-
-    const handleSaveMusic = async () => {
-        setLoading(true);
-        try {
-            await musicDatabase.editMusic(Number(id), inputName, selectedKey, inputText);
-            Toast.success("Música editada com sucesso");
-            setLoading(false);
-            setTimeout(() => {
-                router.navigate("/(tabs)");
-            }, 3000);
-            setInputName("");
-            setSelectedKey("");
-            setInputText("");
-        } catch (error) {
-            console.error("Error saving music", error);
-            Toast.error("Erro ao editar música");
-            setLoading(false);
-        }
-    }
-
-    function routerBack(){
-        router.back()
     }
 
     useEffect(() => {
         getMusicById();
     }, [id]);
 
+    if (!music) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={styles.loadingText}>Carregando...</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
-            <ToastManager
-                width={300}
-            />
-
-            <ScrollView style={styles.scrollView}>
-
-                <View style={styles.boxTextName} >
-                    <Text style={styles.inputLabel}>Nome da música:</Text>
-                   <TouchableOpacity onPress={() => routerBack()} style={styles.btnBack}>
-                        <Text style={styles.textBtnBack}>X</Text>
-                    </TouchableOpacity>
+            {/* Header minimalista */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+                    <FontAwesomeIcon icon={faArrowLeft} size={20} color="#8e99cc" />
+                </TouchableOpacity>
+                
+                <View style={styles.headerCenter}>
+                    <FontAwesomeIcon icon={faMusic} size={16} color="#8e99cc" />
                 </View>
 
-                <TextInput
-                    style={styles.inputName}
-                    placeholder="Nome da música"
-                    value={inputName}
-                    onChangeText={(text) => setInputName(text)}
-                />
+                <View style={styles.headerActions}>
+                    <TouchableOpacity onPress={handleFavoriteToggle} style={styles.headerButton}>
+                        <FontAwesomeIcon 
+                            icon={isFavorite ? faHeart : faHeartRegular} 
+                            size={20} 
+                            color={isFavorite ? "#ff6b6b" : "#8e99cc"} 
+                        />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                        onPress={() => router.push({ pathname: "/editMusic/[id]", params: { id: String(id) } })} 
+                        style={styles.headerButton}
+                    >
+                        <FontAwesomeIcon icon={faPen} size={18} color="#8e99cc" />
+                    </TouchableOpacity>
+                </View>
+            </View>
 
-                {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
-
-                <View style={styles.boxModals}>
-                    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
-                        <Text style={styles.keySelectorText}>
-                            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+            {/* Informações da música */}
+            <View style={styles.musicInfo}>
+                <Text style={styles.musicTitle}>{music.title}</Text>
+                
+                <View style={styles.keyContainer}>
+                    <TouchableOpacity 
+                        onPress={() => setModalVisible(true)} 
+                        style={styles.keySelector}
+                    >
+                        <FontAwesomeIcon icon={faUpDown} size={14} color="#8e99cc" style={styles.keySelectorIcon} />
+                        <Text style={styles.keyText}>Tom: {getDisplayKey()}</Text>
+                    </TouchableOpacity>
+                    
+                    {/* Botão para alternar entre maior/menor */}
+                    <TouchableOpacity onPress={toggleKeyType} style={styles.keyTypeButton}>
+                        <Text style={styles.keyTypeText}>
+                            {keyType === 'major' ? 'Maior' : 'Menor'}
                         </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setTonnerLarger(!tonnerLarger)} style={styles.toneLager}>
-                        <Text style={styles.toneLagerText}>{tonnerLarger ? "+" : "-"}</Text>
-                    </TouchableOpacity>
                 </View>
-                {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
+            </View>
 
-
-                <TouchableOpacity
-                    onPress={() => setShowNotesInput(!showNotesInput)}
-                    style={styles.editNotesButton}
-                >
-                    <Text style={styles.editNotesButtonText}>
-                        {showNotesInput ? "Ocultar Notas Musicais" : "Editar Notas Musicais"}
-                    </Text>
-                </TouchableOpacity>
-
-                {showNotesInput && (
-                    <>
-                        <Text style={styles.inputLabel}>Digite as notas:</Text>
-                        <TextInput
-                            multiline
-                            numberOfLines={10}
-                            textAlignVertical="top"
-                            style={styles.input}
-                            value={inputText}
-                            onChangeText={(text) => setInputText(text)}
-                            placeholder="Ex: <D><D#>m <C> a <C#>"
-                        />
-
-                        {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
-
-                    </>
-                )}
-
-                {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
-
-                {selectedKey && (
-                    <>
-                        <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
-                        <Text style={styles.convertedNotes}>{inputText.replace(/<|>/g, "")}</Text>
-                    </>
-                )}
-
-                <TouchableOpacity
-                    onPress={handleSaveMusic}
-                    disabled={!inputName || !selectedKey || !inputText || loading}
-                    style={styles.btnCreate}
-                >
-                    <Text style={styles.keySelectorText}>{loading ? "Carregando..." : "Editar música"}</Text>
-                </TouchableOpacity>
-
+            {/* Área principal das notas */}
+            <ScrollView 
+                style={styles.notesContainer} 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.notesContent}
+            >
+                <Text style={styles.notesText}>{displayedNotes}</Text>
             </ScrollView>
 
-            <Modal visible={modalVisible} animationType="slide" transparent>
+            {/* Modal de mudança de tom */}
+            <Modal visible={modalVisible} animationType="fade" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Escolha um tom</Text>
-
-                        {Object.keys(NOTES_MAP).map((key) => (
-                            <TouchableOpacity key={key} onPress={() => handleChangeKey(key)} style={styles.modalOption}>
-                                <Text style={styles.modalOptionText}>{key}</Text>
-                            </TouchableOpacity>
-                        ))}
-
-                        <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
-                            <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                        <Text style={styles.modalTitle}>Mudar tom</Text>
+                        <Text style={styles.modalSubtitle}>Tom atual: {getDisplayKey()}</Text>
+                        
+                        <View style={styles.keysGrid}>
+                            {Object.keys(NOTES_MAP).map((key) => (
+                                <TouchableOpacity 
+                                    key={key} 
+                                    onPress={() => handleChangeKey(key)} 
+                                    style={[
+                                        styles.keyOption,
+                                        currentKey === key && styles.keyOptionActive
+                                    ]}
+                                >
+                                    <Text style={[
+                                        styles.keyOptionText,
+                                        currentKey === key && styles.keyOptionTextActive
+                                    ]}>
+                                        {key}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                        
+                        <TouchableOpacity 
+                            onPress={() => setModalVisible(false)} 
+                            style={styles.modalCloseButton}
+                        >
+                            <Text style={styles.modalCloseText}>Fechar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -206,156 +246,159 @@ export default function ListMusic() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
-        padding: 20,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#101323",
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 50,
     },
-
-    boxModals: {
-        flexDirection: "row",
-        alignItems: "center",
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#171c36',
     },
-
+    headerButton: {
+        padding: 8,
+        borderRadius: 6,
+    },
+    headerCenter: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    musicInfo: {
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#171c36',
+    },
+    musicTitle: {
+        fontSize: 28,
+        fontFamily: 'SplineSans-Bold',
+        color: '#fff',
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    keyContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
     keySelector: {
-        width: "75%",
-        padding: 15,
-        backgroundColor: "#a9a9a9",
-        borderRadius: 10,
-        marginBottom: 5,
-        marginTop: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#171c36',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
     },
-
-    toneLager: {
-        width: "23%",
-        padding: 13,
-        backgroundColor: "#a9a9a9",
-        borderRadius: 10,
-        marginBottom: 5,
-        marginTop: 10,
-        marginLeft: 5,
-        alignItems: "center",
+    keySelectorIcon: {
+        marginRight: 8,
     },
-
-    toneLagerText: {
-        color: "#111",
+    keyText: {
+        fontSize: 16,
+        fontFamily: 'SplineSans-Medium',
+        color: '#8e99cc',
+    },
+    keyTypeButton: {
+        backgroundColor: '#607afb',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+    },
+    keyTypeText: {
+        fontSize: 12,
+        fontFamily: 'SplineSans-Bold',
+        color: '#fff',
+        textTransform: 'uppercase',
+    },
+    notesContainer: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    notesContent: {
+        paddingVertical: 32,
+        paddingBottom: 100,
+    },
+    notesText: {
         fontSize: 22,
-        textAlign: "center",
+        fontFamily: 'SplineSans-Regular',
+        color: '#fff',
+        lineHeight: 36,
+        textAlign: 'left',
     },
-
-
-    btnCreate: {
-        width: "100%",
-        padding: 15,
-        backgroundColor: "#a9a9a9",
-        borderRadius: 10,
-        marginBottom: 5,
-        marginTop: 10,
-    },
-
-    keySelectorText: {
-        color: "#111",
+    loadingText: {
         fontSize: 18,
-        textAlign: "center",
+        fontFamily: 'SplineSans-Regular',
+        color: '#8e99cc',
     },
-    inputLabel: {
-        fontSize: 16,
-        margin: 5
-    },
-    inputName: {
-        borderColor: "#ccc",
-        borderWidth: 1,
-        borderRadius: 5,
-        padding: 10,
-        backgroundColor: "#fff",
-        fontSize: 16,
-        marginTop: 10,
-        marginBottom: 10
-    },
-    input: {
-        borderColor: "#ccc",
-        borderWidth: 1,
-        borderRadius: 5,
-        padding: 10,
-        backgroundColor: "#fff",
-        fontSize: 16,
-        lineHeight: 24,
-        textAlignVertical: "top",
-        minHeight: 150,
-    },
-    scrollView: {
-        marginTop: 20,
-    },
-    convertedNotesLabel: {
-        fontSize: 22,
-        fontWeight: "bold",
-    },
-    convertedNotes: {
-        fontSize: 24,
-        color: "blue",
-        marginTop: 10,
-    },
+    // Modal styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.9)",
         justifyContent: "center",
         alignItems: "center",
     },
     modalContent: {
-        backgroundColor: "#FFF",
-        padding: 20,
-        borderRadius: 10,
-        width: "80%",
+        backgroundColor: "#21284a",
+        borderRadius: 16,
+        width: "90%",
+        padding: 24,
     },
     modalTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 10,
+        fontSize: 22,
+        fontFamily: 'SplineSans-Bold',
+        color: "#fff",
+        textAlign: 'center',
+        marginBottom: 8,
     },
-    modalOption: {
-        padding: 10,
-        backgroundColor: "#DDD",
-        borderRadius: 5,
-        marginVertical: 5,
+    modalSubtitle: {
+        fontSize: 16,
+        fontFamily: 'SplineSans-Regular',
+        color: "#8e99cc",
+        textAlign: 'center',
+        marginBottom: 24,
     },
-    modalOptionText: {
-        fontSize: 18,
-        textAlign: "center",
+    keysGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 12,
+        marginBottom: 24,
+    },
+    keyOption: {
+        backgroundColor: "#171c36",
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        minWidth: 50,
+        alignItems: 'center',
+    },
+    keyOptionActive: {
+        backgroundColor: "#607afb",
+    },
+    keyOptionText: {
+        fontSize: 16,
+        fontFamily: 'SplineSans-Medium',
+        color: "#fff",
+    },
+    keyOptionTextActive: {
+        fontFamily: 'SplineSans-Bold',
     },
     modalCloseButton: {
-        padding: 10,
-        backgroundColor: "red",
-        borderRadius: 5,
-        marginTop: 10,
+        backgroundColor: "#171c36",
+        borderRadius: 12,
+        paddingVertical: 16,
     },
-    modalCloseButtonText: {
-        color: "#FFF",
-        fontSize: 18,
+    modalCloseText: {
+        color: "#8e99cc",
+        fontSize: 16,
+        fontFamily: 'SplineSans-Medium',
         textAlign: "center",
     },
-    editNotesButton: {
-        padding: 15,
-        backgroundColor: "#a9a9a9",
-        borderRadius: 10,
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    editNotesButtonText: {
-        color: "#111",
-        fontSize: 18,
-        textAlign: "center",
-    },
-
-    boxTextName: {
-       position: "relative",
-    },
-
-    btnBack:{
-        position:"absolute",
-        right: 0,
-        top: 0,
-    },
-    textBtnBack:{
-        fontSize: 24,
-        fontWeight: "bold",
-    }
 });

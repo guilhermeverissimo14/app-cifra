@@ -50,6 +50,7 @@ function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="listMusic/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="editMusic/[id]" options={{ headerShown: false }} /> 
           <Stack.Screen name="+not-found" />
           <StatusBar style="dark" />
         </Stack>

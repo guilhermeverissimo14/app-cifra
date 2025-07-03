@@ -12,6 +12,8 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import ToastManager, { Toast } from 'toastify-react-native';
 
 const NOTES_MAP: { [key: string]: string[] } = {
@@ -29,38 +31,19 @@ const NOTES_MAP: { [key: string]: string[] } = {
   B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-// Função para transpor notas
-const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
-  if (!fromKey || !toKey || fromKey === toKey) return inputText; // Evita erro se o tom ainda não foi selecionado
-
-  const fromScale = NOTES_MAP[fromKey];
-  const toScale = NOTES_MAP[toKey];
-
-  return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
-    const matchResult = note.match(/[A-G]#?/);
-    const rootNote = matchResult ? matchResult[0] : ""; // Apenas a nota principal
-    const suffix = note.replace(rootNote, ""); // Mantém sufixos como "m", "7", etc.
-
-    const index = fromScale.indexOf(rootNote);
-    return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
-  });
-};
-
 export default function NewMusic() {
   const [inputName, setInputName] = useState<string>("");
-  const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
+  const [selectedKey, setSelectedKey] = useState<string>("");
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showNotesInput, setShowNotesInput] = useState<boolean>(false);
 
   const musicDatabase = useMusicDatabase();
   const router = useRouter();
 
-  // Atualiza as notas ao mudar o tom
+  // Alteração: Agora só muda o tom, SEM alterar as notas
   const handleChangeKey = (newKey: string) => {
-    if (selectedKey) {
-      setInputText(transposeNotes(inputText, selectedKey, newKey));
-    }
     setSelectedKey(newKey);
     setModalVisible(false);
   };
@@ -73,10 +56,11 @@ export default function NewMusic() {
       setLoading(false);
       setTimeout(() => {
         router.navigate("/(tabs)");
-      }, 3000);
+      }, 2000);
       setInputName("");
       setSelectedKey("");
       setInputText("");
+      setShowNotesInput(false);
     } catch (error) {
       console.error("Error saving music", error);
       Toast.error("Erro ao salvar música");
@@ -86,71 +70,118 @@ export default function NewMusic() {
 
   return (
     <View style={styles.container}>
-      <ToastManager
-        width={300}
-      />
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.inputLabel}>Nome da música:</Text>
+      <ToastManager width={300} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Nova Música</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Nome da música */}
+        <Text style={styles.inputLabel}>Nome da música</Text>
         <TextInput
           style={styles.inputName}
           placeholder="Nome da música"
-          value={inputName}
-          onChangeText={(text) => setInputName(text)}
           placeholderTextColor="#8e99cc"
+          value={inputName}
+          onChangeText={setInputName}
         />
+        {!inputName && <Text style={styles.errorText}>Nome é obrigatório</Text>}
 
-        {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
-
-
-
+        {/* Seletor de tom */}
+        <Text style={styles.inputLabel}>Tom da música</Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
           <Text style={styles.keySelectorText}>
-            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+            {selectedKey ? `Tom: ${selectedKey}` : "Selecione um tom"}
+          </Text>
+        </TouchableOpacity>
+        {!selectedKey && <Text style={styles.errorText}>Tom é obrigatório</Text>}
+
+        {/* Botão para mostrar/ocultar notas */}
+        <TouchableOpacity
+          onPress={() => setShowNotesInput(!showNotesInput)}
+          style={styles.toggleNotesButton}
+        >
+          <FontAwesomeIcon 
+            icon={showNotesInput ? faEyeSlash : faEye} 
+            size={16} 
+            color="#fff" 
+            style={styles.toggleIcon}
+          />
+          <Text style={styles.toggleNotesText}>
+            {showNotesInput ? "Ocultar notas" : "Adicionar notas"}
           </Text>
         </TouchableOpacity>
 
-        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
-
-
-        <Text style={styles.inputLabel}>Digite as notas:</Text>
-        <TextInput
-          multiline
-          numberOfLines={10}
-          textAlignVertical="top"
-          style={styles.input}
-          value={inputText}
-          onChangeText={(text) => setInputText(text)}
-          placeholder="Ex: <D><D#>m <C> a <C#>"
-          placeholderTextColor="#8e99cc"
-        />
-
-        {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
-
-        {selectedKey && (
+        {/* Campo de notas */}
+        {showNotesInput && (
           <>
-            <Text style={styles.convertedNotesLabel}>Notas Convertidas:</Text>
-            <Text style={styles.convertedNotes}>{inputText.replace(/<|>/g, "")}</Text>
+            <Text style={styles.inputLabel}>Notas musicais</Text>
+            <TextInput
+              multiline
+              numberOfLines={8}
+              textAlignVertical="top"
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Ex: <D><D#>m <C> <C#>"
+              placeholderTextColor="#8e99cc"
+            />
+            {!inputText && <Text style={styles.errorText}>Notas são obrigatórias</Text>}
           </>
         )}
 
-        <TouchableOpacity disabled={!inputName || !selectedKey || !inputText || loading} onPress={handleSaveMusic} style={styles.btnCreate}>
-          <Text style={styles.keySelectorText}>{loading ? "Carregando" : "Salvar música"}</Text>
-        </TouchableOpacity>
+        {/* Preview das notas convertidas */}
+        {selectedKey && inputText && (
+          <View style={styles.previewContainer}>
+            <Text style={styles.previewLabel}>Preview:</Text>
+            <Text style={styles.previewText}>
+              {inputText.replace(/<|>/g, "")}
+            </Text>
+          </View>
+        )}
 
+        {/* Botão salvar */}
+        <TouchableOpacity
+          onPress={handleSaveMusic}
+          disabled={!inputName || !selectedKey || !inputText || loading}
+          style={[styles.saveButton, (!inputName || !selectedKey || !inputText || loading) && styles.saveButtonDisabled]}
+        >
+          <Text style={styles.saveButtonText}>
+            {loading ? "Salvando..." : "Criar música"}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
+      {/* Modal de seleção de tom - PADRONIZADO igual ao da edição */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Escolha um tom</Text>
-
-            {Object.keys(NOTES_MAP).map((key) => (
-              <TouchableOpacity key={key} onPress={() => handleChangeKey(key)} style={styles.modalOption}>
-                <Text style={styles.modalOptionText}>{key}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
+            <ScrollView style={styles.modalScrollView}>
+              {Object.keys(NOTES_MAP).map((key) => (
+                <TouchableOpacity 
+                  key={key} 
+                  onPress={() => handleChangeKey(key)} 
+                  style={[
+                    styles.modalOption,
+                    selectedKey === key && styles.modalOptionSelected
+                  ]}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    selectedKey === key && styles.modalOptionTextSelected
+                  ]}>
+                    {key}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity 
+              onPress={() => setModalVisible(false)} 
+              style={styles.modalCloseButton}
+            >
               <Text style={styles.modalCloseButtonText}>Fechar</Text>
             </TouchableOpacity>
           </View>
@@ -163,116 +194,172 @@ export default function NewMusic() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
-    padding: 20,
     backgroundColor: "#101323",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 50,
   },
-
-  keySelector: {
-    width: "100%",
-    padding: 15,
-    backgroundColor: "#171c36",
-    borderRadius: 10,
-    marginBottom: 5,
-    marginTop: 10,
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-
-  btnCreate: {
-    width: "100%",
-    padding: 15,
-    backgroundColor: "#607afb",
-    borderRadius: 10,
-    marginBottom: 5,
-    marginTop: 10,
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: 'SplineSans-Bold',
+    color: '#fff',
   },
-
-  keySelectorText: {
-    color: "#ffffff",
-    fontFamily: 'SplineSans-Regular',
-    fontSize: 18,
-    textAlign: "center",
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   inputLabel: {
     fontSize: 16,
     color: "#fff",
     fontFamily: 'SplineSans-Bold',
-    marginTop: 8,
+    marginTop: 16,
     marginBottom: 8,
   },
   inputName: {
-    color: "#ffffff",
-    borderWidth: 0,
-    borderRadius: 8,
-    padding: 10,
     backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
-    marginTop: 10,
-    marginBottom: 10
+    fontFamily: 'SplineSans-Regular',
+    color: "#ffffff",
+    marginBottom: 4,
+  },
+  keySelector: {
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 4,
+  },
+  keySelectorText: {
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Regular',
+    fontSize: 16,
+    textAlign: "center",
+  },
+  toggleNotesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  toggleIcon: {
+    marginRight: 8,
+  },
+  toggleNotesText: {
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Regular',
+    fontSize: 16,
   },
   input: {
-    borderWidth: 0,
-    borderRadius: 8,
-    padding: 10,
     backgroundColor: "#171c36",
-    color: "#ffffff",
-    fontFamily: 'SplineSans-Regular',
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
+    fontFamily: 'SplineSans-Regular',
+    color: "#ffffff",
     lineHeight: 24,
     textAlignVertical: "top",
-    minHeight: 150,
+    minHeight: 200,
+    marginBottom: 4,
   },
-  scrollView: {
-    marginTop: 20,
+  previewContainer: {
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
   },
-  convertedNotesLabel: {
-    fontSize: 22,
-    color: "#fff",
+  previewLabel: {
+    fontSize: 14,
     fontFamily: 'SplineSans-Bold',
-  },
-  convertedNotes: {
-    fontSize: 20,
     color: "#8e99cc",
-    fontFamily: 'SplineSans-Regular',
-    marginTop: 10,
-    marginBottom: 10,
+    marginBottom: 8,
   },
+  previewText: {
+    fontSize: 18,
+    fontFamily: 'SplineSans-Regular',
+    color: "#fff",
+    lineHeight: 26,
+  },
+  saveButton: {
+    backgroundColor: "#607afb",
+    borderRadius: 8,
+    padding: 15,
+    marginTop: 24,
+    marginBottom: 40,
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#2a3548",
+  },
+  saveButtonText: {
+    color: "#ffffff",
+    fontFamily: 'SplineSans-Bold',
+    fontSize: 16,
+    textAlign: "center",
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 14,
+    fontFamily: 'SplineSans-Regular',
+    marginBottom: 8,
+  },
+  // Modal styles - PADRONIZADO igual ao da edição
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#21284a",
+    borderRadius: 12,
+    width: "85%",
+    maxHeight: "70%",
     padding: 20,
-    borderRadius: 10,
-    width: "80%",
   },
   modalTitle: {
     fontSize: 20,
     fontFamily: 'SplineSans-Bold',
     color: "#fff",
-    marginBottom: 10,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalScrollView: {
+    maxHeight: 300,
   },
   modalOption: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-    marginVertical: 5,
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 4,
+  },
+  modalOptionSelected: {
+    backgroundColor: "#607afb",
   },
   modalOptionText: {
-    fontSize: 18,
+    fontSize: 16,
+    fontFamily: 'SplineSans-Regular',
+    color: "#fff",
     textAlign: "center",
   },
+  modalOptionTextSelected: {
+    fontFamily: 'SplineSans-Bold',
+  },
   modalCloseButton: {
-    padding: 10,
-    backgroundColor: "red",
-    borderRadius: 5,
-    marginTop: 10,
+    backgroundColor: "#ff6b6b",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
   },
   modalCloseButtonText: {
-    color: "#FFF",
-    fontSize: 18,
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: 'SplineSans-Bold',
     textAlign: "center",
   },
 });
