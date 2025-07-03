@@ -73,19 +73,19 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
 
         {deleteIcon && (
           <TouchableOpacity onPress={() => deleteMusic(id)}>
-            <FontAwesomeIcon icon={faTrash} size={15} color="white" />
+            <FontAwesomeIcon icon={faTrash} size={25} color="white" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={navigation}>
-          <FontAwesomeIcon icon={faEye} size={15} color="white" />
+          <FontAwesomeIcon icon={faEye} size={25} color="white" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleFavoritePress}>
           {favorite ? (
-            <FontAwesomeIcon icon={faHeart} size={20} color="brown" />
+            <FontAwesomeIcon icon={faHeart} size={25} color="brown" />
           ) : (
-            <FontAwesomeIcon icon={faHeartRegular} size={20} color="brown" />
+            <FontAwesomeIcon icon={faHeartRegular} size={25} color="brown" />
           )}
         </TouchableOpacity>
 

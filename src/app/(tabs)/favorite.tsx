@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
         paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
     },
     text: {
+        marginTop: 64,
         fontSize: 20,
         fontFamily: "SplineSans-Bold",
         paddingTop: 52,
