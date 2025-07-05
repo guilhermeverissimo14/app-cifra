@@ -148,5 +148,6 @@ const styles = StyleSheet.create({
     borderColor: "#21284a",
     borderWidth: 1,
     padding: 8,
+    paddingRight: 16,
   },
 });

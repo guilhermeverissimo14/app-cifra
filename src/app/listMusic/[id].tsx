@@ -22,45 +22,10 @@ const NOTES_MAP: { [key: string]: string[] } = {
     B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-// Mapeamento de tons maiores e menores
-const MAJOR_MINOR_MAP: { [key: string]: { major: string, minor: string } } = {
-    C: { major: "C", minor: "Cm" },
-    "C#": { major: "C#", minor: "C#m" },
-    D: { major: "D", minor: "Dm" },
-    "D#": { major: "D#", minor: "D#m" },
-    E: { major: "E", minor: "Em" },
-    F: { major: "F", minor: "Fm" },
-    "F#": { major: "F#", minor: "F#m" },
-    G: { major: "G", minor: "Gm" },
-    "G#": { major: "G#", minor: "G#m" },
-    A: { major: "A", minor: "Am" },
-    "A#": { major: "A#", minor: "A#m" },
-    B: { major: "B", minor: "Bm" },
-};
-
-// Função para detectar se o tom é menor baseado no conteúdo da música
-const detectKeyType = (notes: string, currentKey: string): 'major' | 'minor' => {
-    // Verifica se há indicação explícita de menor no texto
-    const minorPatterns = [
-        new RegExp(`<${currentKey}m>`, 'gi'),
-        new RegExp(`${currentKey}m`, 'gi'),
-        /minor/gi,
-        /menor/gi
-    ];
-    
-    for (const pattern of minorPatterns) {
-        if (pattern.test(notes)) {
-            return 'minor';
-        }
-    }
-    
-    // Se não encontrou indicação de menor, assume maior
-    return 'major';
-};
-
+// Função de transposição IGUAL à da edição
 const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
     if (!fromKey || !toKey || fromKey === toKey) return inputText;
-    
+
     const fromScale = NOTES_MAP[fromKey];
     const toScale = NOTES_MAP[toKey];
 
@@ -74,6 +39,24 @@ const transposeNotes = (inputText: string, fromKey: string, toKey: string): stri
     });
 };
 
+// Função para detectar se o tom é menor baseado no conteúdo da música
+const detectKeyType = (notes: string, currentKey: string): 'major' | 'minor' => {
+    const minorPatterns = [
+        new RegExp(`<${currentKey}m>`, 'gi'),
+        new RegExp(`${currentKey}m`, 'gi'),
+        /minor/gi,
+        /menor/gi
+    ];
+    
+    for (const pattern of minorPatterns) {
+        if (pattern.test(notes)) {
+            return 'minor';
+        }
+    }
+    
+    return 'major';
+};
+
 export default function ViewMusic() {
     const { id } = useLocalSearchParams();
     const musicDatabase = useMusicDatabase();
@@ -81,14 +64,17 @@ export default function ViewMusic() {
 
     const [music, setMusic] = useState<MusicType | null>(null);
     const [currentKey, setCurrentKey] = useState<string>("");
+    const [originalKey, setOriginalKey] = useState<string>(""); // NOVO: Tom original da música
     const [displayedNotes, setDisplayedNotes] = useState<string>("");
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const [keyType, setKeyType] = useState<'major' | 'minor'>('major');
 
+    // CORRIGIDO: Lógica igual à da edição
     const handleChangeKey = (newKey: string) => {
-        if (music && currentKey) {
-            const transposedNotes = transposeNotes(music.notes, currentKey, newKey);
+        if (music && originalKey) {
+            // Transpõe das notas originais para o novo tom
+            const transposedNotes = transposeNotes(music.notes, originalKey, newKey);
             setDisplayedNotes(transposedNotes.replace(/<|>/g, ""));
         }
         setCurrentKey(newKey);
@@ -119,6 +105,7 @@ export default function ViewMusic() {
             const musicData = result[0] as MusicType;
             setMusic(musicData);
             setCurrentKey(musicData.tone);
+            setOriginalKey(musicData.tone); // NOVO: Salva o tom original
             setDisplayedNotes(musicData.notes.replace(/<|>/g, ""));
             setIsFavorite(musicData.favorite);
             
