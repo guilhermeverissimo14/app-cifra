@@ -1,11 +1,10 @@
-// edição 
 
 import { useMusicDatabase } from "@/src/database/musicDatabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faX, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faX, faEye, faEyeSlash, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { MusicType } from "../(tabs)";
 import ToastManager, { Toast } from "toastify-react-native";
 
@@ -51,9 +50,11 @@ export default function ListMusic() {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
     const [showNotesInput, setShowNotesInput] = useState<boolean>(false);
+    const [shouldTransposeNotes, setShouldTransposeNotes] = useState<boolean>(false);
 
+    // Alteração: Agora verifica se deve transpor as notas baseado na opção do usuário
     const handleChangeKey = (newKey: string) => {
-        if (selectedKey) {
+        if (shouldTransposeNotes && selectedKey) {
             setInputText(transposeNotes(inputText, selectedKey, newKey));
         }
         setSelectedKey(newKey);
@@ -124,6 +125,21 @@ export default function ListMusic() {
                     </Text>
                 </TouchableOpacity>
                 {!selectedKey && <Text style={styles.errorText}>Tom é obrigatório</Text>}
+
+                {/* Opção para transpor notas */}
+                {/* <TouchableOpacity
+                    onPress={() => setShouldTransposeNotes(!shouldTransposeNotes)}
+                    style={styles.transposeOption}
+                >
+                    <View style={[styles.checkbox, shouldTransposeNotes && styles.checkboxActive]}>
+                        {shouldTransposeNotes && (
+                            <FontAwesomeIcon icon={faCheck} size={12} color="#fff" />
+                        )}
+                    </View>
+                    <Text style={styles.transposeOptionText}>
+                        Transpor notas ao mudar tom
+                    </Text>
+                </TouchableOpacity> */}
 
                 {/* Botão para mostrar/ocultar notas */}
                 <TouchableOpacity
@@ -342,6 +358,35 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'SplineSans-Regular',
         marginBottom: 8,
+    },
+    transposeOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 4,
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 2,
+        borderColor: "#8e99cc",
+        backgroundColor: "transparent",
+        marginRight: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkboxActive: {
+        backgroundColor: "#607afb",
+        borderColor: "#607afb",
+    },
+    transposeOptionText: {
+        color: "#fff",
+        fontSize: 16,
+        fontFamily: 'SplineSans-Regular',
+        flex: 1,
     },
     // Modal styles
     modalOverlay: {

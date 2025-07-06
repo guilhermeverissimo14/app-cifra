@@ -22,19 +22,68 @@ const NOTES_MAP: { [key: string]: string[] } = {
     B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-// Função de transposição IGUAL à da edição
+// Mapeamento de notas enarmônicas (equivalentes)
+const ENHARMONIC_MAP: { [key: string]: string } = {
+    "C#": "Db", "Db": "C#",
+    "D#": "Eb", "Eb": "D#", 
+    "F#": "Gb", "Gb": "F#",
+    "G#": "Ab", "Ab": "G#",
+    "A#": "Bb", "Bb": "A#"
+};
+
+// Função para normalizar nota para o formato padrão (sempre com #)
+const normalizeNote = (note: string): string => {
+    const cleanNote = note.replace(/[^A-Gb#♭]/g, ''); // Remove sufixos como 'm'
+    
+    // Converte bemol para sustenido equivalente
+    const bemolToSustenido: { [key: string]: string } = {
+        "Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"
+    };
+    
+    return bemolToSustenido[cleanNote] || cleanNote;
+};
+
+// Função de transposição com suporte completo a enarmônicos
+// Agora reconhece equivalências: C# = Db, D# = Eb, F# = Gb, G# = Ab, A# = Bb
+// Exemplo: <Db> será transposto corretamente como equivalente a <C#>
 const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
     if (!fromKey || !toKey || fromKey === toKey) return inputText;
 
     const fromScale = NOTES_MAP[fromKey];
     const toScale = NOTES_MAP[toKey];
 
-    return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
-        const matchResult = note.match(/[A-G]#?/);
-        const rootNote = matchResult ? matchResult[0] : "";
+    return inputText.replace(/<([A-Gb#♭]+[^>]*)>/g, (match: string, note: string) => {
+        // Extrai a nota base (A-G seguido de # ou b)
+        const noteMatch = note.match(/^([A-G][#♭b]?)/);
+        if (!noteMatch) return match;
+        
+        let rootNote = noteMatch[1];
         const suffix = note.replace(rootNote, "");
-
-        const index = fromScale.indexOf(rootNote);
+        
+        // Normaliza diferentes formatos de bemol
+        rootNote = rootNote.replace('♭', 'b');
+        
+        // Normaliza a nota para o formato padrão (#)
+        const normalizedNote = normalizeNote(rootNote);
+        
+        // Procura a nota na escala original
+        let index = fromScale.indexOf(normalizedNote);
+        
+        // Se não encontrar, tenta com todas as variações enarmônicas
+        if (index === -1) {
+            const variations = [
+                rootNote,
+                ENHARMONIC_MAP[rootNote],
+                ENHARMONIC_MAP[normalizedNote],
+                normalizedNote
+            ].filter(Boolean);
+            
+            for (const variation of variations) {
+                index = fromScale.indexOf(variation);
+                if (index !== -1) break;
+            }
+        }
+        
         return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
     });
 };
