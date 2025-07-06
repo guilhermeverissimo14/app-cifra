@@ -41,7 +41,8 @@
           "project": "react-native",
           "organization": "guilherme-0j"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
