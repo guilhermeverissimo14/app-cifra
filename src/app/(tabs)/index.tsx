@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#101323",
     alignItems: "center",
-    paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
+    paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight! + 20,
   },
     searchContainer: {
     flexDirection: 'row',

@@ -79,10 +79,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#101323",
         justifyContent: "center",
         alignItems: "center",
-        paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
+        paddingTop: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight! + 20,
     },
     text: {
-        marginTop: 64,
         fontSize: 20,
         fontFamily: "SplineSans-Bold",
         paddingTop: 52,
