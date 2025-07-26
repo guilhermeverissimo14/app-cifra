@@ -10,15 +10,19 @@ interface MusicCardProps {
   title: string;
   tone: string;
   favorite: boolean;
+  isMinor?: boolean;
   navigation?: any;
   deleteIcon: boolean;
   onFavoriteToggle?: () => void;
   onDeleteSuccess?: () => void;
 }
 
-export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, onFavoriteToggle, onDeleteSuccess }: MusicCardProps) => {
+export const MusicCard = ({ id, title, tone, favorite, isMinor = false, navigation, deleteIcon, onFavoriteToggle, onDeleteSuccess }: MusicCardProps) => {
 
   const musicDatabase = useMusicDatabase();
+
+  // Exibe o tom com "m" se for menor
+  const displayTone = isMinor ? `${tone}m` : tone;
 
   const handleFavoritePress = async () => {
     const newFavorite = !favorite;
@@ -61,7 +65,7 @@ export const MusicCard = ({ id, title, tone, favorite, navigation, deleteIcon, o
 
         <View style={styles.contentTexts}>
           <Text style={styles.textTitle}>{title.length > 20 ? title.substring(0, 20) + '...' : title}</Text>
-          <Text style={styles.textDescription}>{tone.length > 20 ? tone.substring(0, 20) + '...' : tone}</Text>
+          <Text style={styles.textDescription}>{displayTone.length > 20 ? displayTone.substring(0, 20) + '...' : displayTone}</Text>
         </View>
       </View>
 

@@ -25,7 +25,7 @@ const NOTES_MAP: { [key: string]: string[] } = {
 // Mapeamento de notas enarmônicas (equivalentes)
 const ENHARMONIC_MAP: { [key: string]: string } = {
     "C#": "Db", "Db": "C#",
-    "D#": "Eb", "Eb": "D#", 
+    "D#": "Eb", "Eb": "D#",
     "F#": "Gb", "Gb": "F#",
     "G#": "Ab", "Ab": "G#",
     "A#": "Bb", "Bb": "A#"
@@ -34,12 +34,12 @@ const ENHARMONIC_MAP: { [key: string]: string } = {
 // Função para normalizar nota para o formato padrão (sempre com #)
 const normalizeNote = (note: string): string => {
     const cleanNote = note.replace(/[^A-Gb#♭]/g, ''); // Remove sufixos como 'm'
-    
+
     // Converte bemol para sustenido equivalente
     const bemolToSustenido: { [key: string]: string } = {
         "Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"
     };
-    
+
     return bemolToSustenido[cleanNote] || cleanNote;
 };
 
@@ -56,19 +56,19 @@ const transposeNotes = (inputText: string, fromKey: string, toKey: string): stri
         // Extrai a nota base (A-G seguido de # ou b)
         const noteMatch = note.match(/^([A-G][#♭b]?)/);
         if (!noteMatch) return match;
-        
+
         let rootNote = noteMatch[1];
         const suffix = note.replace(rootNote, "");
-        
+
         // Normaliza diferentes formatos de bemol
         rootNote = rootNote.replace('♭', 'b');
-        
+
         // Normaliza a nota para o formato padrão (#)
         const normalizedNote = normalizeNote(rootNote);
-        
+
         // Procura a nota na escala original
         let index = fromScale.indexOf(normalizedNote);
-        
+
         // Se não encontrar, tenta com todas as variações enarmônicas
         if (index === -1) {
             const variations = [
@@ -77,34 +77,18 @@ const transposeNotes = (inputText: string, fromKey: string, toKey: string): stri
                 ENHARMONIC_MAP[normalizedNote],
                 normalizedNote
             ].filter(Boolean);
-            
+
             for (const variation of variations) {
                 index = fromScale.indexOf(variation);
                 if (index !== -1) break;
             }
         }
-        
+
         return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
     });
 };
 
-// Função para detectar se o tom é menor baseado no conteúdo da música
-const detectKeyType = (notes: string, currentKey: string): 'major' | 'minor' => {
-    const minorPatterns = [
-        new RegExp(`<${currentKey}m>`, 'gi'),
-        new RegExp(`${currentKey}m`, 'gi'),
-        /minor/gi,
-        /menor/gi
-    ];
-    
-    for (const pattern of minorPatterns) {
-        if (pattern.test(notes)) {
-            return 'minor';
-        }
-    }
-    
-    return 'major';
-};
+
 
 export default function ViewMusic() {
     const { id } = useLocalSearchParams();
@@ -157,10 +141,9 @@ export default function ViewMusic() {
             setOriginalKey(musicData.tone); // NOVO: Salva o tom original
             setDisplayedNotes(musicData.notes.replace(/<|>/g, ""));
             setIsFavorite(musicData.favorite);
-            
-            // Detecta automaticamente se é maior ou menor
-            const detectedType = detectKeyType(musicData.notes, musicData.tone);
-            setKeyType(detectedType);
+
+            // Usa o campo isMinor do banco de dados
+            setKeyType(musicData.isMinor ? 'minor' : 'major');
         } catch (error) {
             console.error(error);
         }
@@ -185,22 +168,22 @@ export default function ViewMusic() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
                     <FontAwesomeIcon icon={faArrowLeft} size={20} color="#8e99cc" />
                 </TouchableOpacity>
-                
+
                 <View style={styles.headerCenter}>
                     <FontAwesomeIcon icon={faMusic} size={16} color="#8e99cc" />
                 </View>
 
                 <View style={styles.headerActions}>
                     <TouchableOpacity onPress={handleFavoriteToggle} style={styles.headerButton}>
-                        <FontAwesomeIcon 
-                            icon={isFavorite ? faHeart : faHeartRegular} 
-                            size={20} 
-                            color={isFavorite ? "#ff6b6b" : "#8e99cc"} 
+                        <FontAwesomeIcon
+                            icon={isFavorite ? faHeart : faHeartRegular}
+                            size={20}
+                            color={isFavorite ? "#ff6b6b" : "#8e99cc"}
                         />
                     </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                        onPress={() => router.push({ pathname: "/editMusic/[id]", params: { id: String(id) } })} 
+
+                    <TouchableOpacity
+                        onPress={() => router.push({ pathname: "/editMusic/[id]", params: { id: String(id) } })}
                         style={styles.headerButton}
                     >
                         <FontAwesomeIcon icon={faPen} size={18} color="#8e99cc" />
@@ -211,16 +194,16 @@ export default function ViewMusic() {
             {/* Informações da música */}
             <View style={styles.musicInfo}>
                 <Text style={styles.musicTitle}>{music.title}</Text>
-                
+
                 <View style={styles.keyContainer}>
-                    <TouchableOpacity 
-                        onPress={() => setModalVisible(true)} 
+                    <TouchableOpacity
+                        onPress={() => setModalVisible(true)}
                         style={styles.keySelector}
                     >
                         <FontAwesomeIcon icon={faUpDown} size={14} color="#8e99cc" style={styles.keySelectorIcon} />
                         <Text style={styles.keyText}>Tom: {getDisplayKey()}</Text>
                     </TouchableOpacity>
-                    
+
                     {/* Botão para alternar entre maior/menor */}
                     <TouchableOpacity onPress={toggleKeyType} style={styles.keyTypeButton}>
                         <Text style={styles.keyTypeText}>
@@ -231,8 +214,8 @@ export default function ViewMusic() {
             </View>
 
             {/* Área principal das notas */}
-            <ScrollView 
-                style={styles.notesContainer} 
+            <ScrollView
+                style={styles.notesContainer}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.notesContent}
             >
@@ -245,12 +228,12 @@ export default function ViewMusic() {
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Mudar tom</Text>
                         <Text style={styles.modalSubtitle}>Tom atual: {getDisplayKey()}</Text>
-                        
+
                         <View style={styles.keysGrid}>
                             {Object.keys(NOTES_MAP).map((key) => (
-                                <TouchableOpacity 
-                                    key={key} 
-                                    onPress={() => handleChangeKey(key)} 
+                                <TouchableOpacity
+                                    key={key}
+                                    onPress={() => handleChangeKey(key)}
                                     style={[
                                         styles.keyOption,
                                         currentKey === key && styles.keyOptionActive
@@ -265,9 +248,9 @@ export default function ViewMusic() {
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        
-                        <TouchableOpacity 
-                            onPress={() => setModalVisible(false)} 
+
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(false)}
                             style={styles.modalCloseButton}
                         >
                             <Text style={styles.modalCloseText}>Fechar</Text>
