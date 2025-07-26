@@ -23,18 +23,66 @@ const NOTES_MAP: { [key: string]: string[] } = {
     B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
+// Mapeamento de notas enarmônicas (equivalentes)
+const ENHARMONIC_MAP: { [key: string]: string } = {
+    "C#": "Db", "Db": "C#",
+    "D#": "Eb", "Eb": "D#", 
+    "F#": "Gb", "Gb": "F#",
+    "G#": "Ab", "Ab": "G#",
+    "A#": "Bb", "Bb": "A#"
+};
+
+// Função para normalizar nota para o formato padrão (sempre com #)
+const normalizeNote = (note: string): string => {
+    const cleanNote = note.replace(/[^A-Gb#♭]/g, ''); // Remove sufixos como 'm'
+    
+    // Converte bemol para sustenido equivalente
+    const bemolToSustenido: { [key: string]: string } = {
+        "Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"
+    };
+    
+    return bemolToSustenido[cleanNote] || cleanNote;
+};
+
+// Função de transposição IGUAL à da tela de listagem (com suporte a enarmônicos)
 const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
     if (!fromKey || !toKey || fromKey === toKey) return inputText;
 
     const fromScale = NOTES_MAP[fromKey];
     const toScale = NOTES_MAP[toKey];
 
-    return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
-        const matchResult = note.match(/[A-G]#?/);
-        const rootNote = matchResult ? matchResult[0] : "";
+    return inputText.replace(/<([A-Gb#♭]+[^>]*)>/g, (match: string, note: string) => {
+        // Extrai a nota base (A-G seguido de # ou b)
+        const noteMatch = note.match(/^([A-G][#♭b]?)/);
+        if (!noteMatch) return match;
+        
+        let rootNote = noteMatch[1];
         const suffix = note.replace(rootNote, "");
-
-        const index = fromScale.indexOf(rootNote);
+        
+        // Normaliza diferentes formatos de bemol
+        rootNote = rootNote.replace('♭', 'b');
+        
+        // Normaliza a nota para o formato padrão (#)
+        const normalizedNote = normalizeNote(rootNote);
+        
+        // Procura a nota na escala original
+        let index = fromScale.indexOf(normalizedNote);
+        
+        // Se não encontrar, tenta com todas as variações enarmônicas
+        if (index === -1) {
+            const variations = [
+                rootNote,
+                ENHARMONIC_MAP[rootNote],
+                ENHARMONIC_MAP[normalizedNote],
+                normalizedNote
+            ].filter(Boolean);
+            
+            for (const variation of variations) {
+                index = fromScale.indexOf(variation);
+                if (index !== -1) break;
+            }
+        }
+        
         return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
     });
 };
@@ -51,10 +99,24 @@ export default function ListMusic() {
     const [loading, setLoading] = useState<boolean>(false);
     const [showNotesInput, setShowNotesInput] = useState<boolean>(false);
     const [shouldTransposeNotes, setShouldTransposeNotes] = useState<boolean>(false);
+    const [keyType, setKeyType] = useState<'major' | 'minor'>('major');
+    const [showErrors, setShowErrors] = useState<boolean>(false);
+
+    // Alterna entre maior e menor
+    const toggleKeyType = () => {
+        setKeyType(keyType === 'major' ? 'minor' : 'major');
+    };
+
+    // Obtém a exibição do tom com o 'm' se for menor
+    const getDisplayKey = () => {
+        if (!selectedKey) return "Selecione o tom";
+        return keyType === 'minor' ? `${selectedKey}m` : selectedKey;
+    };
 
     // Alteração: Agora verifica se deve transpor as notas baseado na opção do usuário
     const handleChangeKey = (newKey: string) => {
         if (shouldTransposeNotes && selectedKey) {
+            // Usa a mesma lógica EXATA da tela de listagem
             setInputText(transposeNotes(inputText, selectedKey, newKey));
         }
         setSelectedKey(newKey);
@@ -68,15 +130,23 @@ export default function ListMusic() {
             setInputName(musicData.title);
             setSelectedKey(musicData.tone);
             setInputText(musicData.notes);
+            setKeyType(musicData.isMinor ? 'minor' : 'major');
         } catch (error) {
             console.error(error);
         }
     }
 
     const handleSaveMusic = async () => {
+        // Validação dos campos obrigatórios
+        if (!inputName.trim() || !selectedKey || !inputText.trim()) {
+            setShowErrors(true);
+            Toast.error("Preencha todos os campos obrigatórios");
+            return;
+        }
+
         setLoading(true);
         try {
-            await musicDatabase.editMusic(Number(id), inputName, selectedKey, inputText);
+            await musicDatabase.editMusic(Number(id), inputName, selectedKey, inputText, keyType === 'minor');
             Toast.success("Música editada com sucesso");
             setLoading(false);
             setTimeout(() => {
@@ -115,19 +185,28 @@ export default function ListMusic() {
                     value={inputName}
                     onChangeText={setInputName}
                 />
-                {!inputName && <Text style={styles.errorText}>Nome é obrigatório</Text>}
+                {showErrors && !inputName && <Text style={styles.errorText}>Nome é obrigatório</Text>}
 
                 {/* Seletor de tom */}
                 <Text style={styles.inputLabel}>Tom da música</Text>
                 <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
                     <Text style={styles.keySelectorText}>
-                        {selectedKey ? `Tom: ${selectedKey}` : "Selecione um tom"}
+                        {selectedKey ? `Tom: ${getDisplayKey()}` : "Selecione um tom"}
                     </Text>
                 </TouchableOpacity>
-                {!selectedKey && <Text style={styles.errorText}>Tom é obrigatório</Text>}
+                {showErrors && !selectedKey && <Text style={styles.errorText}>Tom é obrigatório</Text>}
+
+                {/* Maior/Menor */}
+                {selectedKey && (
+                    <TouchableOpacity onPress={toggleKeyType} style={styles.keyTypeButton}>
+                        <Text style={styles.keyTypeText}>
+                            {keyType === 'major' ? 'Maior' : 'Menor'}
+                        </Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* Opção para transpor notas */}
-                {/* <TouchableOpacity
+                <TouchableOpacity
                     onPress={() => setShouldTransposeNotes(!shouldTransposeNotes)}
                     style={styles.transposeOption}
                 >
@@ -139,7 +218,7 @@ export default function ListMusic() {
                     <Text style={styles.transposeOptionText}>
                         Transpor notas ao mudar tom
                     </Text>
-                </TouchableOpacity> */}
+                </TouchableOpacity>
 
                 {/* Botão para mostrar/ocultar notas */}
                 <TouchableOpacity
@@ -171,7 +250,7 @@ export default function ListMusic() {
                             placeholder="Ex: <D><D#>m <C> <C#>"
                             placeholderTextColor="#8e99cc"
                         />
-                        {!inputText && <Text style={styles.errorText}>Notas são obrigatórias</Text>}
+                        {showErrors && !inputText && <Text style={styles.errorText}>Notas são obrigatórias</Text>}
                     </>
                 )}
 
@@ -387,6 +466,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'SplineSans-Regular',
         flex: 1,
+    },
+    keyTypeButton: {
+        backgroundColor: "#607afb",
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 8,
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    keyTypeText: {
+        color: "#fff",
+        fontSize: 16,
+        fontFamily: 'SplineSans-Bold',
     },
     // Modal styles
     modalOverlay: {

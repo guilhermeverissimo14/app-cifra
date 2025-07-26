@@ -8,14 +8,39 @@ import { MusicCard } from "@/src/components/musicCard/musicCard";
 import { useFocusEffect, useRouter } from "expo-router";
 
 export default function Favorite() {
-    const { getMusicFavorite } = useMusicDatabase();
+    const { getMusicFavorite, updateFavoriteOrder } = useMusicDatabase();
     const router = useRouter();
     const [musicFavorite, setMusicFavorite] = useState<MusicType[]>([]);
 
     async function getFavorites() {
-        const result = await getMusicFavorite();
-        setMusicFavorite(result as MusicType[]);
+        try {
+            const result = await getMusicFavorite();
+            const sortedResult = (result as MusicType[]).sort((a, b) => {
+                // Ordena por 'ordem' primeiro, depois por 'id' como fallback
+                if (a.ordem !== b.ordem) {
+                    return a.ordem - b.ordem;
+                }
+                return a.id - b.id;
+            });
+            setMusicFavorite(sortedResult);
+        } catch (error) {
+            console.error('Error getting favorites:', error);
+        }
     }
+
+    const handleDragEnd = async ({ data }: { data: MusicType[] }) => {
+        setMusicFavorite(data);
+        // Salva a nova ordem no banco de dados
+        const musicIds = data.map(item => item.id);
+        try {
+            await updateFavoriteOrder(musicIds);
+            console.log('Order updated successfully for favorites');
+        } catch (error) {
+            console.error('Error updating favorite order:', error);
+            // Recarrega a lista em caso de erro
+            await getFavorites();
+        }
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -43,6 +68,7 @@ export default function Favorite() {
                     title={item.title}
                     tone={item.tone}
                     favorite={item.favorite}
+                    isMinor={item.isMinor}
                     onFavoriteToggle={handleFavoriteToggle}
                 />
             </TouchableOpacity>
@@ -59,7 +85,7 @@ export default function Favorite() {
                 <DraggableFlatList
                     data={musicFavorite}
                     keyExtractor={(item) => item.id.toString()}
-                    onDragEnd={({ data }) => setMusicFavorite(data)}
+                    onDragEnd={handleDragEnd}
                     renderItem={renderItem}
                     activationDistance={10}
                 />

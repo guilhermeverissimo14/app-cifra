@@ -15,6 +15,8 @@ export interface MusicType {
   tone: string;
   notes: string;
   favorite: boolean;
+  isMinor: boolean;
+  ordem: number;
 }
 
 export default function HomeScreen() {
@@ -84,6 +86,7 @@ export default function HomeScreen() {
               tone={item.tone}
               deleteIcon={true}
               favorite={item.favorite}
+              isMinor={item.isMinor}
               onFavoriteToggle={handleFavoriteToggle}
               onDeleteSuccess={getMusic}
             />

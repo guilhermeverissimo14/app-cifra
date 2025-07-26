@@ -12,6 +12,8 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {  faCheck } from '@fortawesome/free-solid-svg-icons';
 import ToastManager, { Toast } from 'toastify-react-native';
 
 const NOTES_MAP: { [key: string]: string[] } = {
@@ -29,36 +31,116 @@ const NOTES_MAP: { [key: string]: string[] } = {
   B: ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"],
 };
 
-// Função para transpor notas
+// Mapeamento de notas enarmônicas (equivalentes)
+const ENHARMONIC_MAP: { [key: string]: string } = {
+    "C#": "Db", "Db": "C#",
+    "D#": "Eb", "Eb": "D#", 
+    "F#": "Gb", "Gb": "F#",
+    "G#": "Ab", "Ab": "G#",
+    "A#": "Bb", "Bb": "A#"
+};
+
+// Função para normalizar nota para o formato padrão (sempre com #)
+const normalizeNote = (note: string): string => {
+    const cleanNote = note.replace(/[^A-Gb#♭]/g, ''); // Remove sufixos como 'm'
+    
+    // Converte bemol para sustenido equivalente
+    const bemolToSustenido: { [key: string]: string } = {
+        "Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"
+    };
+    
+    return bemolToSustenido[cleanNote] || cleanNote;
+};
+
+// Função de transposição IGUAL à da tela de listagem (com suporte a enarmônicos)
 const transposeNotes = (inputText: string, fromKey: string, toKey: string): string => {
-  if (!fromKey || !toKey || fromKey === toKey) return inputText; // Evita erro se o tom ainda não foi selecionado
+    if (!fromKey || !toKey || fromKey === toKey) return inputText;
 
-  const fromScale = NOTES_MAP[fromKey];
-  const toScale = NOTES_MAP[toKey];
+    const fromScale = NOTES_MAP[fromKey];
+    const toScale = NOTES_MAP[toKey];
 
-  return inputText.replace(/<([A-G]#?[^>]*)>/g, (match: string, note: string) => {
-    const matchResult = note.match(/[A-G]#?/);
-    const rootNote = matchResult ? matchResult[0] : ""; // Apenas a nota principal
-    const suffix = note.replace(rootNote, ""); // Mantém sufixos como "m", "7", etc.
+    return inputText.replace(/<([A-Gb#♭]+[^>]*)>/g, (match: string, note: string) => {
+        // Extrai a nota base (A-G seguido de # ou b)
+        const noteMatch = note.match(/^([A-G][#♭b]?)/);
+        if (!noteMatch) return match;
+        
+        let rootNote = noteMatch[1];
+        const suffix = note.replace(rootNote, "");
+        
+        // Normaliza diferentes formatos de bemol
+        rootNote = rootNote.replace('♭', 'b');
+        
+        // Normaliza a nota para o formato padrão (#)
+        const normalizedNote = normalizeNote(rootNote);
+        
+        // Procura a nota na escala original
+        let index = fromScale.indexOf(normalizedNote);
+        
+        // Se não encontrar, tenta com todas as variações enarmônicas
+        if (index === -1) {
+            const variations = [
+                rootNote,
+                ENHARMONIC_MAP[rootNote],
+                ENHARMONIC_MAP[normalizedNote],
+                normalizedNote
+            ].filter(Boolean);
+            
+            for (const variation of variations) {
+                index = fromScale.indexOf(variation);
+                if (index !== -1) break;
+            }
+        }
+        
+        return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
+    });
+};
 
-    const index = fromScale.indexOf(rootNote);
-    return index !== -1 ? `<${toScale[index]}${suffix}>` : match;
-  });
+// Função para detectar se o tom é menor baseado no conteúdo da música
+const detectKeyType = (notes: string, currentKey: string): 'major' | 'minor' => {
+    const minorPatterns = [
+        new RegExp(`<${currentKey}m>`, 'gi'),
+        new RegExp(`${currentKey}m`, 'gi'),
+        /minor/gi,
+        /menor/gi
+    ];
+    
+    for (const pattern of minorPatterns) {
+        if (pattern.test(notes)) {
+            return 'minor';
+        }
+    }
+    
+    return 'major';
 };
 
 export default function NewMusic() {
   const [inputName, setInputName] = useState<string>("");
-  const [selectedKey, setSelectedKey] = useState<string>(""); // Inicia sem tom
+  const [selectedKey, setSelectedKey] = useState<string>("");
   const [inputText, setInputText] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [keyType, setKeyType] = useState<'major' | 'minor'>('major');
+  const [showErrors, setShowErrors] = useState<boolean>(false);
+  const [shouldTransposeNotes, setShouldTransposeNotes] = useState<boolean>(false);
 
   const musicDatabase = useMusicDatabase();
   const router = useRouter();
 
-  // Atualiza as notas ao mudar o tom
+  // Alterna entre maior e menor
+  const toggleKeyType = () => {
+    setKeyType(keyType === 'major' ? 'minor' : 'major');
+  };
+
+  // Obtém a exibição do tom com o 'm' se for menor
+  const getDisplayKey = () => {
+    if (!selectedKey) return "Selecione um Tom";
+    return keyType === 'minor' ? `${selectedKey}m` : selectedKey;
+  };
+
+  // Atualiza as notas ao mudar o tom (com opção de transpor)
   const handleChangeKey = (newKey: string) => {
-    if (selectedKey) {
+    if (shouldTransposeNotes && selectedKey) {
+      // Usa a mesma lógica EXATA da tela de listagem
       setInputText(transposeNotes(inputText, selectedKey, newKey));
     }
     setSelectedKey(newKey);
@@ -66,9 +148,16 @@ export default function NewMusic() {
   };
 
   const handleSaveMusic = async () => {
+    // Validação dos campos obrigatórios
+    if (!inputName.trim() || !selectedKey || !inputText.trim()) {
+      setShowErrors(true);
+      Toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
     setLoading(true);
     try {
-      await musicDatabase.saveMusic(inputName, selectedKey, inputText);
+      await musicDatabase.saveMusic(inputName, selectedKey, inputText, keyType === 'minor');
       Toast.success("Música salva com sucesso");
       setLoading(false);
       setTimeout(() => {
@@ -77,6 +166,8 @@ export default function NewMusic() {
       setInputName("");
       setSelectedKey("");
       setInputText("");
+      setKeyType('major');
+      setShowErrors(false);
     } catch (error) {
       console.error("Error saving music", error);
       Toast.error("Erro ao salvar música");
@@ -98,19 +189,39 @@ export default function NewMusic() {
           onChangeText={(text) => setInputName(text)}
           placeholderTextColor="#8e99cc"
         />
+        {showErrors && !inputName && <Text style={styles.errorText}>Nome é obrigatório</Text>}
 
-        {!inputName && <Text style={{ color: "red" }}>Nome é obrigatório.</Text>}
-
-
-
+        <Text style={styles.inputLabel}>Tom da música:</Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.keySelector}>
           <Text style={styles.keySelectorText}>
-            {selectedKey ? `Tom Atual: ${selectedKey}` : "Selecione um Tom"}
+            {selectedKey ? `Tom: ${getDisplayKey()}` : "Selecione um Tom"}
           </Text>
         </TouchableOpacity>
+        {showErrors && !selectedKey && <Text style={styles.errorText}>Tom é obrigatório</Text>}
 
-        {!selectedKey && <Text style={{ color: "red", marginBottom: 10 }}>Tom é obrigatório.</Text>}
+        {/* Maior/Menor */}
+        {selectedKey && (
+          <TouchableOpacity onPress={toggleKeyType} style={styles.keyTypeButton}>
+            <Text style={styles.keyTypeText}>
+              {keyType === 'major' ? 'Maior' : 'Menor'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
+        {/* Opção para transpor notas */}
+        <TouchableOpacity
+          onPress={() => setShouldTransposeNotes(!shouldTransposeNotes)}
+          style={styles.transposeOption}
+        >
+          <View style={[styles.checkbox, shouldTransposeNotes && styles.checkboxActive]}>
+            {shouldTransposeNotes && (
+              <FontAwesomeIcon icon={faCheck} size={12} color="#fff" />
+            )}
+          </View>
+          <Text style={styles.transposeOptionText}>
+            Transpor notas ao mudar tom
+          </Text>
+        </TouchableOpacity>
 
         <Text style={styles.inputLabel}>Digite as notas:</Text>
         <TextInput
@@ -124,7 +235,7 @@ export default function NewMusic() {
           placeholderTextColor="#8e99cc"
         />
 
-        {!inputText && <Text style={{ color: "red", marginTop: 5 }}>Notas são obrigatórias.</Text>}
+        {showErrors && !inputText && <Text style={styles.errorText}>Notas são obrigatórias</Text>}
 
         {selectedKey && (
           <>
@@ -143,14 +254,29 @@ export default function NewMusic() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Escolha um tom</Text>
-
-            {Object.keys(NOTES_MAP).map((key) => (
-              <TouchableOpacity key={key} onPress={() => handleChangeKey(key)} style={styles.modalOption}>
-                <Text style={styles.modalOptionText}>{key}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
+            <ScrollView style={styles.modalScrollView}>
+              {Object.keys(NOTES_MAP).map((key) => (
+                <TouchableOpacity 
+                  key={key} 
+                  onPress={() => handleChangeKey(key)} 
+                  style={[
+                    styles.modalOption,
+                    selectedKey === key && styles.modalOptionSelected
+                  ]}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    selectedKey === key && styles.modalOptionTextSelected
+                  ]}>
+                    {key}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity 
+              onPress={() => setModalVisible(false)} 
+              style={styles.modalCloseButton}
+            >
               <Text style={styles.modalCloseButtonText}>Fechar</Text>
             </TouchableOpacity>
           </View>
@@ -236,43 +362,106 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 14,
+    fontFamily: 'SplineSans-Regular',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  keyTypeButton: {
+    backgroundColor: "#607afb",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  keyTypeText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: 'SplineSans-Bold',
+  },
+  transposeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#8e99cc",
+    backgroundColor: "transparent",
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxActive: {
+    backgroundColor: "#607afb",
+    borderColor: "#607afb",
+  },
+  transposeOptionText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: 'SplineSans-Regular',
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#21284a",
+    borderRadius: 12,
+    width: "85%",
+    maxHeight: "70%",
     padding: 20,
-    borderRadius: 10,
-    width: "80%",
   },
   modalTitle: {
     fontSize: 20,
     fontFamily: 'SplineSans-Bold',
     color: "#fff",
-    marginBottom: 10,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalScrollView: {
+    maxHeight: 300,
   },
   modalOption: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-    marginVertical: 5,
+    backgroundColor: "#171c36",
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 4,
+  },
+  modalOptionSelected: {
+    backgroundColor: "#607afb",
   },
   modalOptionText: {
-    fontSize: 18,
+    fontSize: 16,
+    fontFamily: 'SplineSans-Regular',
+    color: "#fff",
     textAlign: "center",
   },
+  modalOptionTextSelected: {
+    fontFamily: 'SplineSans-Bold',
+  },
   modalCloseButton: {
-    padding: 10,
-    backgroundColor: "red",
-    borderRadius: 5,
-    marginTop: 10,
+    backgroundColor: "#ff6b6b",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
   },
   modalCloseButtonText: {
-    color: "#FFF",
-    fontSize: 18,
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: 'SplineSans-Bold',
     textAlign: "center",
   },
 });
